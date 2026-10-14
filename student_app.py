@@ -13,8 +13,8 @@ logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI(
-    title="University — Student Dossier Gateway",
-    description="Automated Headless Extraction and Verification Engine for University UMS Portal",
+    title="Parul University — Student Dossier Gateway",
+    description="Automated Headless Extraction and Verification Engine for Parul University UMS Portal",
     version="1.0.0"
 )
 

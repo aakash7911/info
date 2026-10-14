@@ -506,11 +506,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 if any(fw in k_clean.lower() for fw in ["fee", "fees", "collected", "installment", "amount"]):
                     continue
 
-                if "domicile" in k_clean.lower() or "state" in k_clean.lower():
-                    if "non - gujarat" in v_clean.lower() or "non-gujarat" in v_clean.lower():
-                        match = re.search(r'\((.*?)\)', v_clean)
-                        v_clean = match.group(1).strip() if match else "Uttar Pradesh"
-
                 combo = f"{k_clean.lower()}::{v_clean.lower()}"
                 if combo not in seen:
                     seen.add(combo)
@@ -592,9 +587,9 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 summary["institute"] = f_val
             elif ("mobile" in f_lower or "phone" in f_lower or "contact" in f_lower) and summary["contact_mobile"] == "N/A":
                 summary["contact_mobile"] = f_val
-            elif "email" in f_lower and summary["email"] == "N/A":
-                summary["email"] = f_val
-            elif "domicile" in f_lower or "state" in f_lower:
+            elif "domicile" in f_lower and summary["domicile"] == "N/A":
+                summary["domicile"] = f_val
+            elif "state" in f_lower and summary["domicile"] == "N/A":
                 summary["domicile"] = f_val
 
         log(f"Successfully processed student dossier: {len(all_sections_data)} fields extracted.")

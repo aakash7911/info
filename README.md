@@ -1,4 +1,4 @@
-# University — Student Dossier & Verification Portal
+# Parul University — Student Dossier & Verification Portal
 
 Automated student profile extraction and verification portal using ID Card OCR and Headless Browser Automation.
 
