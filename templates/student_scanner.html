@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -222,15 +223,20 @@
             </div>
 
             <!-- Action buttons below preview on mobile -->
-            <div class="grid grid-cols-2 gap-2.5">
-              <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-3 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-slate-200 transition flex items-center justify-center space-x-2">
-                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>Change Photo</span>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-slate-200 transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="truncate">Change</span>
               </button>
 
-              <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-3 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-emerald-400 transition flex items-center justify-center space-x-2">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span>Re-scan Photo</span>
+              <button type="button" onclick="rotateCurrentUploadedImage(90)" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-amber-400 transition flex items-center justify-center space-x-1.5" title="Rotate image 90 degrees if card is sideways">
+                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span class="truncate">Rotate ↻</span>
+              </button>
+
+              <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-emerald-400 transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="truncate">Re-scan</span>
               </button>
             </div>
           </div>
@@ -665,6 +671,22 @@
       }
     }
 
+    async function rotateCurrentUploadedImage(degrees = 90) {
+      if (!currentUploadedDataUrl) {
+        triggerFilePicker();
+        return;
+      }
+      try {
+        const rotated = await rotateImageCanvas(currentUploadedDataUrl, degrees);
+        currentUploadedDataUrl = rotated;
+        const previewImg = document.getElementById('uploadPreviewImg');
+        if (previewImg) previewImg.src = rotated;
+        await processImageWithOCR(rotated);
+      } catch (err) {
+        console.error("Rotation error:", err);
+      }
+    }
+
     // Drag and drop listeners
     document.addEventListener('DOMContentLoaded', () => {
       const dropzone = document.getElementById('dropzone');
@@ -809,23 +831,83 @@
       });
     }
 
-    // 90-degree canvas rotation for Pass 3 (handles vertical/sideways mobile photos)
+    // Barcode detection (Native browser BarcodeDetector API & ZXing library)
+    async function detectBarcodeFromDataUrl(dataUrl) {
+      // 1. Native browser BarcodeDetector API (instant hardware accelerated)
+      if ('BarcodeDetector' in window) {
+        try {
+          const detector = new BarcodeDetector({ formats: ['code_128', 'code_39', 'codabar', 'ean_13', 'upc_a'] });
+          const img = new Image();
+          await new Promise((r, rej) => { img.onload = r; img.onerror = rej; img.src = dataUrl; });
+          const barcodes = await detector.detect(img);
+          if (barcodes && barcodes.length > 0) {
+            for (const b of barcodes) {
+              if (b.rawValue) {
+                const parsed = extractCredentialsFromText(b.rawValue);
+                if (parsed.foundEnrollment) return parsed.foundEnrollment;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 2. ZXing library fallback
+      if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+        try {
+          const reader = new ZXing.BrowserMultiFormatReader();
+          const img = new Image();
+          await new Promise((r, rej) => { img.onload = r; img.onerror = rej; img.src = dataUrl; });
+          const result = await reader.decodeFromImageElement(img);
+          if (result && result.text) {
+            const parsed = extractCredentialsFromText(result.text);
+            if (parsed.foundEnrollment) return parsed.foundEnrollment;
+          }
+        } catch (e) {}
+      }
+
+      return "";
+    }
+
+    // High-resolution canvas rotation with adaptive minimum width
     function rotateImageCanvas(dataUrl, angleDegrees = 90) {
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (angleDegrees === 90 || angleDegrees === 270) {
-            canvas.width = img.height;
-            canvas.height = img.width;
-          } else {
-            canvas.width = img.width;
-            canvas.height = img.height;
+          const origW = img.width;
+          const origH = img.height;
+          if (!origW || !origH) return resolve(dataUrl);
+
+          const isOrthogonal = (angleDegrees === 90 || angleDegrees === 270);
+          const unscaledW = isOrthogonal ? origH : origW;
+          const unscaledH = isOrthogonal ? origW : origH;
+
+          // Adaptive scaling: ensure width of card is crisp (min 900px, max 1800px)
+          let scale = 1;
+          const minDim = Math.min(unscaledW, unscaledH);
+          const maxDim = Math.max(unscaledW, unscaledH);
+          if (maxDim > 2000) {
+            scale = 1600 / maxDim;
+          } else if (minDim < 750) {
+            scale = Math.min(2.5, 950 / minDim);
           }
-          ctx.translate(canvas.width / 2, canvas.height / 2);
+
+          const canvasW = Math.round(unscaledW * scale);
+          const canvasH = Math.round(unscaledH * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = canvasW;
+          canvas.height = canvasH;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.translate(canvasW / 2, canvasH / 2);
           ctx.rotate((angleDegrees * Math.PI) / 180);
-          ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+          const drawW = Math.round(origW * scale);
+          const drawH = Math.round(origH * scale);
+          ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
           resolve(canvas.toDataURL('image/jpeg', 0.92));
         };
         img.onerror = () => resolve(dataUrl);
@@ -833,7 +915,7 @@
       });
     }
 
-    // Core Multi-Pass OCR Execution (Tesseract.js)
+    // Core Multi-Pass OCR Execution (Tesseract.js & Barcode Engine)
     async function processImageWithOCR(rawImageData) {
       if (isOcrRunning) return;
       isOcrRunning = true;
@@ -847,7 +929,7 @@
       progressBar.className = 'bg-portal-accent h-1.5 rounded-full transition-all duration-300';
       progressBar.style.width = '10%';
       progressPercent.innerText = '10%';
-      statusText.innerText = 'Preparing image for OCR...';
+      statusText.innerText = 'Initializing card scan...';
 
       const scanAlert = document.getElementById('scanStatusAlert');
       if (scanAlert) scanAlert.classList.add('hidden');
@@ -857,75 +939,114 @@
       let combinedText = '';
 
       try {
-        // --- PASS 1: Clean Scaled Image (preserves original color text & edges) ---
-        const cleanData = await prepareImageCanvas(rawImageData, 1600);
-        statusText.innerText = 'Reading ID Card (Pass 1)...';
-        progressBar.style.width = '25%';
-        progressPercent.innerText = '25%';
+        // --- STEP 1: Quick Barcode Detection ---
+        statusText.innerText = 'Scanning card barcode...';
+        progressBar.style.width = '20%';
+        progressPercent.innerText = '20%';
 
-        const res1 = await Tesseract.recognize(
-          cleanData,
-          'eng',
-          {
-            logger: m => {
-              if (m.status === 'recognizing text') {
-                const p = Math.round(m.progress * 45) + 20; // 20% to 65%
-                progressBar.style.width = `${p}%`;
-                progressPercent.innerText = `${p}%`;
-                statusText.innerText = `Scanning ID Card (${p}%)...`;
-              }
+        const bc = await detectBarcodeFromDataUrl(rawImageData);
+        if (bc) combinedEnrollment = bc;
+
+        // --- STEP 2: Pass 1 OCR (Original Orientation) ---
+        statusText.innerText = 'Reading card text (Pass 1)...';
+        progressBar.style.width = '35%';
+        progressPercent.innerText = '35%';
+
+        const cleanData = await prepareImageCanvas(rawImageData, 1600);
+        const res1 = await Tesseract.recognize(cleanData, 'eng', {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const p = Math.round(m.progress * 25) + 35; // 35% to 60%
+              progressBar.style.width = `${p}%`;
+              progressPercent.innerText = `${p}%`;
+              statusText.innerText = `Scanning ID Card (${p}%)...`;
             }
           }
-        );
+        });
 
         const text1 = res1.data.text || '';
         combinedText = text1;
         const parsed1 = extractCredentialsFromText(text1);
-        combinedEnrollment = parsed1.foundEnrollment || '';
-        combinedDob = parsed1.foundDob || '';
+        if (!combinedEnrollment && parsed1.foundEnrollment) combinedEnrollment = parsed1.foundEnrollment;
+        if (!combinedDob && parsed1.foundDob) combinedDob = parsed1.foundDob;
 
-        // --- PASS 2: Dynamic Contrast Normalization (if either field missing) ---
+        // --- STEP 3: If either missing, test 90° Clockwise Rotation (Handles sideways mobile photos) ---
         if (!combinedEnrollment || !combinedDob) {
-          statusText.innerText = 'Deep scanning missing credentials (Pass 2)...';
-          progressBar.style.width = '70%';
-          progressPercent.innerText = '70%';
+          statusText.innerText = 'Checking sideways orientation (90°)...';
+          progressBar.style.width = '65%';
+          progressPercent.innerText = '65%';
 
-          const enhancedData = await enhanceContrastForOCR(rawImageData, 1600);
-          const res2 = await Tesseract.recognize(
-            enhancedData,
-            'eng',
-            {
-              logger: m => {
-                if (m.status === 'recognizing text') {
-                  const p = Math.round(m.progress * 20) + 70; // 70% to 90%
-                  progressBar.style.width = `${p}%`;
-                  progressPercent.innerText = `${p}%`;
-                  statusText.innerText = `Scanning deep contrast (${p}%)...`;
-                }
+          const rotated90 = await rotateImageCanvas(rawImageData, 90);
+          
+          if (!combinedEnrollment) {
+            const rotBc = await detectBarcodeFromDataUrl(rotated90);
+            if (rotBc) combinedEnrollment = rotBc;
+          }
+
+          const resRot90 = await Tesseract.recognize(rotated90, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                const p = Math.round(m.progress * 20) + 65; // 65% to 85%
+                progressBar.style.width = `${p}%`;
+                progressPercent.innerText = `${p}%`;
+                statusText.innerText = `Scanning 90° orientation (${p}%)...`;
               }
             }
-          );
+          });
 
-          const text2 = res2.data.text || '';
-          combinedText += '\n--- PASS 2 ---\n' + text2;
-          const parsed2 = extractCredentialsFromText(text2);
-          if (!combinedEnrollment && parsed2.foundEnrollment) combinedEnrollment = parsed2.foundEnrollment;
-          if (!combinedDob && parsed2.foundDob) combinedDob = parsed2.foundDob;
+          const textRot90 = resRot90.data.text || '';
+          combinedText += '\n--- PASS ROTATED 90° ---\n' + textRot90;
+          const parsedRot90 = extractCredentialsFromText(textRot90);
+          if (!combinedEnrollment && parsedRot90.foundEnrollment) combinedEnrollment = parsedRot90.foundEnrollment;
+          if (!combinedDob && parsedRot90.foundDob) combinedDob = parsedRot90.foundDob;
+
+          // If rotated 90° succeeded in finding fields, update preview so card appears upright!
+          if (parsedRot90.foundEnrollment || parsedRot90.foundDob) {
+            currentUploadedDataUrl = rotated90;
+            const previewImg = document.getElementById('uploadPreviewImg');
+            if (previewImg) previewImg.src = rotated90;
+          }
         }
 
-        // --- PASS 3: 90° Orientation Fallback (if still missing) ---
+        // --- STEP 4: If still missing, test 270° (Counter-clockwise) ---
         if (!combinedEnrollment || !combinedDob) {
-          statusText.innerText = 'Checking rotated orientation (Pass 3)...';
-          progressBar.style.width = '90%';
-          progressPercent.innerText = '90%';
+          statusText.innerText = 'Checking 270° orientation...';
+          progressBar.style.width = '85%';
+          progressPercent.innerText = '85%';
 
-          const rotatedData = await rotateImageCanvas(rawImageData, 90);
-          const res3 = await Tesseract.recognize(rotatedData, 'eng');
-          const text3 = res3.data.text || '';
-          combinedText += '\n--- PASS 3 (Rotated) ---\n' + text3;
-          const parsed3 = extractCredentialsFromText(text3);
-          if (!combinedEnrollment && parsed3.foundEnrollment) combinedEnrollment = parsed3.foundEnrollment;
-          if (!combinedDob && parsed3.foundDob) combinedDob = parsed3.foundDob;
+          const rotated270 = await rotateImageCanvas(rawImageData, 270);
+          if (!combinedEnrollment) {
+            const rot270Bc = await detectBarcodeFromDataUrl(rotated270);
+            if (rot270Bc) combinedEnrollment = rot270Bc;
+          }
+
+          const resRot270 = await Tesseract.recognize(rotated270, 'eng');
+          const textRot270 = resRot270.data.text || '';
+          combinedText += '\n--- PASS ROTATED 270° ---\n' + textRot270;
+          const parsedRot270 = extractCredentialsFromText(textRot270);
+          if (!combinedEnrollment && parsedRot270.foundEnrollment) combinedEnrollment = parsedRot270.foundEnrollment;
+          if (!combinedDob && parsedRot270.foundDob) combinedDob = parsedRot270.foundDob;
+
+          if (parsedRot270.foundEnrollment || parsedRot270.foundDob) {
+            currentUploadedDataUrl = rotated270;
+            const previewImg = document.getElementById('uploadPreviewImg');
+            if (previewImg) previewImg.src = rotated270;
+          }
+        }
+
+        // --- STEP 5: If still missing, test Dynamic Contrast Normalization ---
+        if (!combinedEnrollment || !combinedDob) {
+          statusText.innerText = 'Deep contrast scan...';
+          progressBar.style.width = '95%';
+          progressPercent.innerText = '95%';
+
+          const enhancedData = await enhanceContrastForOCR(currentUploadedDataUrl || rawImageData, 1600);
+          const resContrast = await Tesseract.recognize(enhancedData, 'eng');
+          const textContrast = resContrast.data.text || '';
+          combinedText += '\n--- PASS CONTRAST ---\n' + textContrast;
+          const parsedContrast = extractCredentialsFromText(textContrast);
+          if (!combinedEnrollment && parsedContrast.foundEnrollment) combinedEnrollment = parsedContrast.foundEnrollment;
+          if (!combinedDob && parsedContrast.foundDob) combinedDob = parsedContrast.foundDob;
         }
 
         document.getElementById('rawOcrText').innerText = combinedText;
@@ -939,11 +1060,11 @@
           progressPercent.innerText = '100%';
           setTimeout(() => progressCard.classList.add('hidden'), 2500);
         } else {
-          statusText.innerText = '⚠️ Scan Incomplete: Please re-scan ID card!';
+          statusText.innerText = '⚠️ Scan Incomplete: Tap "Rotate ↻" if sideways or upload clearer card';
           progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = 'Incomplete';
-          setTimeout(() => progressCard.classList.add('hidden'), 4000);
+          setTimeout(() => progressCard.classList.add('hidden'), 4500);
         }
 
         // Guide mobile user smoothly to verification section

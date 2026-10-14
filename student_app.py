@@ -61,7 +61,14 @@ async def serve_scanner_ui():
         raise HTTPException(status_code=404, detail="Scanner frontend template not found.")
     with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
         content = f.read()
-    return HTMLResponse(content=content)
+    return HTMLResponse(
+        content=content,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 @app.get("/health")
 @app.get("/api/health")
