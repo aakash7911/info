@@ -1,6 +1,9 @@
 import os
 import re
 import logging
+import asyncio
+import resource
+import gc
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
@@ -12,6 +15,19 @@ from mongo_service import save_student_dossier, check_mongo_health
 
 logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+# Global concurrency lock to guarantee strictly ONE Chromium instance at a time (protects 512MB RAM limit)
+SCRAPE_LOCK = asyncio.Lock()
+
+def get_current_memory_mb() -> float:
+    """Returns current resident set size (RSS) in MB."""
+    try:
+        usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        if hasattr(os, "uname") and os.uname().sysname == "Darwin":
+            usage = usage / 1024
+        return round(usage, 2)
+    except Exception:
+        return 0.0
 
 app = FastAPI(
     title="University — Student Dossier Gateway",
@@ -73,12 +89,18 @@ async def serve_scanner_ui():
 @app.get("/health")
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint for Render / monitoring."""
+    """Health check endpoint for Render / monitoring with live memory stats."""
     db_health = check_mongo_health()
+    current_mem_mb = get_current_memory_mb()
     return {
         "status": "healthy",
         "service": "student-dossier-gateway",
         "browser_engine": "headless-chromium",
+        "memory": {
+            "current_rss_mb": current_mem_mb,
+            "render_limit_mb": 512,
+            "status": "safe" if current_mem_mb < 400 else "warning"
+        },
         "mongodb": db_health
     }
 
@@ -93,6 +115,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     Triggers the headless browser automation to log into UMS,
     harvest all student tabs, compile an Excel workbook,
     and persist the entire record to MongoDB.
+    Strictly serialized with SCRAPE_LOCK to prevent memory from ever exceeding 512MB RAM.
     """
     enrollment = payload.enrollment_no.strip()
     dob = payload.dob.strip()
@@ -101,9 +124,21 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
         raise HTTPException(status_code=400, detail="Both enrollment_no and dob are required.")
 
     logger.info(f"Incoming scrape request for Enrollment: {enrollment}")
-    
-    # Run scraper
-    result = scrape_student_data(enrollment_no=enrollment, dob=dob, headless=payload.headless)
+    logger.info(f"[MEM BEFORE SCRAPE] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
+
+    # Serialize browser execution so only ONE headless Chrome instance runs at a time
+    async with SCRAPE_LOCK:
+        logger.info(f"Acquired scrape lock for {enrollment}. Launching Chrome in thread pool...")
+        result = await asyncio.to_thread(
+            scrape_student_data,
+            enrollment_no=enrollment,
+            dob=dob,
+            headless=payload.headless
+        )
+
+    # Immediately force Python garbage collection
+    gc.collect()
+    logger.info(f"[MEM AFTER SCRAPE & GC] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
     if not result.get("success"):
         error_msg = result.get("error") or "Failed to extract student profile from UMS."

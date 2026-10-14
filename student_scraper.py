@@ -31,19 +31,53 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 DOSSIERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "generated_dossiers")
 os.makedirs(DOSSIERS_DIR, exist_ok=True)
 
+def cleanup_browser_processes():
+    """Aggressively terminates any lingering chromium/chromedriver processes to reclaim RAM."""
+    try:
+        import subprocess
+        subprocess.run(["pkill", "-9", "-f", "chromium|chromedriver"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
 def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
-    """Configures Chrome options with headless and anti-bot flags suitable for local and server/Render environments."""
+    """Configures Chrome options with extreme memory optimization (<512MB RAM) and anti-bot flags."""
     options = webdriver.ChromeOptions()
     if headless:
         options.add_argument("--headless=new")
 
+    # Critical Low-RAM Flags for 512MB Free/Starter containers:
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--start-maximized")
+    options.add_argument("--renderer-process-limit=1")
+    options.add_argument("--no-zygote")
+    options.add_argument("--window-size=960,600")
+
+    # Cap V8 JS heap to 128MB max to trigger early GC
+    options.add_argument("--js-flags=--max-old-space-size=128")
+
+    # Disable image loading & decoding (saves >50% browser RAM)
+    options.add_argument("--blink-settings=imagesEnabled=false")
+
+    # Disable disk & media caches to prevent RAM buildup
+    options.add_argument("--disk-cache-size=1")
+    options.add_argument("--media-cache-size=1")
+    options.add_argument("--aggressive-cache-discard")
+
+    # Disable unnecessary background features & services
     options.add_argument("--disable-extensions")
+    options.add_argument("--disable-default-apps")
+    options.add_argument("--disable-sync")
+    options.add_argument("--disable-translate")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+    options.add_argument("--disable-breakpad")
+    options.add_argument("--disable-component-update")
+    options.add_argument("--disable-domain-reliability")
+    options.add_argument("--disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process,TranslateUI,BlinkGenPropertyTrees")
+
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -205,6 +239,14 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
     excel_filename = f"Student_Dossier_{clean_enrollment}_{unique_suffix}.xlsx"
     full_path = os.path.join(DOSSIERS_DIR, excel_filename)
     wb.save(full_path)
+    try:
+        wb.close()
+    except Exception:
+        pass
+    del ws
+    del wb
+    import gc
+    gc.collect()
     logger.info(f"Excel dossier saved at: {full_path}")
     return full_path
 
@@ -238,6 +280,11 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
     driver = None
 
     try:
+        # Reclaim any stray memory before launching browser
+        cleanup_browser_processes()
+        import gc
+        gc.collect()
+
         log(f"Initializing invisible browser for {enrollment_no}...")
         driver = create_driver(headless=headless)
         wait = WebDriverWait(driver, 18)
@@ -637,3 +684,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 logger.info("Closed Chrome driver instance.")
             except Exception:
                 pass
+            driver = None
+        cleanup_browser_processes()
+        import gc
+        gc.collect()

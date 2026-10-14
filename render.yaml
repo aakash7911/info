@@ -3,11 +3,14 @@ services:
     name: university-student-dossier-portal
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn student_app:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn student_app:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 10
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.8
+      - key: WEB_CONCURRENCY
+        value: "1"
       - key: SELENIUM_CACHE_DIR
         value: /tmp/.selenium
       - key: MONGODB_URI
         sync: false
+
