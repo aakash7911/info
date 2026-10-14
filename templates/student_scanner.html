@@ -20,16 +20,8 @@
           },
           colors: {
             portal: {
-              950: '#070A12',
-              900: '#0B1120',
-              850: '#0F172A',
-              800: '#1E293B',
-              700: '#334155',
-              600: '#475569',
               accent: '#2563EB',
               accentHover: '#1D4ED8',
-              emerald: '#10B981',
-              warning: '#F59E0B'
             }
           }
         }
@@ -37,6 +29,15 @@
     }
   </script>
   <style>
+    /* CodeChef style crisp white grid pattern ("dabbe wala white") */
+    .bg-grid-white {
+      background-color: #FFFFFF;
+      background-image: 
+        linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-position: center top;
+    }
     /* Mobile touch ergonomics & native viewport */
     button, input, select {
       touch-action: manipulation;
@@ -58,38 +59,38 @@
     }
     /* Custom scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0B1120; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
-<body class="bg-portal-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+<body class="bg-grid-white text-slate-800 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
 
   <!-- Top Navigation Bar -->
-  <header class="border-b border-portal-800 bg-portal-900/90 backdrop-blur sticky top-0 z-50">
+  <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm shrink-0">
+        <div class="h-10 w-10 rounded-xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shadow-sm shrink-0">
           UNI
         </div>
         <div class="min-w-0">
           <div class="flex items-center space-x-2">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">UNIVERSITY</h1>
-            <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-portal-800 text-slate-300 border border-slate-700">UMS Dossier</span>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900">UNIVERSITY</h1>
+            <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">UMS Dossier</span>
           </div>
-          <p class="text-[11px] sm:text-xs text-slate-400 truncate">Automated Student Profile Extraction & Verification Portal</p>
+          <p class="text-[11px] sm:text-xs text-slate-500 truncate">Automated Student Profile Extraction & Verification Portal</p>
         </div>
       </div>
       
       <div class="flex items-center space-x-2.5">
         <!-- Live Database Connection Indicator -->
-        <div id="dbStatusPill" class="inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-800 text-[11px] font-mono border border-slate-700 transition" title="Checking database connectivity...">
-          <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span id="dbStatusText" class="text-slate-300">DB: Checking...</span>
+        <div id="dbStatusPill" class="inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200 transition" title="Checking database connectivity...">
+          <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span id="dbStatusText" class="text-slate-700 font-medium">DB: Checking...</span>
         </div>
 
-        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>Gateway: READY</span>
         </div>
       </div>
@@ -97,242 +98,389 @@
   </header>
 
   <!-- Main Content Area -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12">
 
-    <!-- Top Headline Banner -->
-    <div class="relative overflow-hidden rounded-2xl border border-portal-800 bg-gradient-to-r from-portal-900 via-portal-850 to-portal-900 p-4 sm:p-7">
-      <div class="max-w-3xl space-y-2">
-        <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
-          <span>Digital Student Bureau</span>
-          <span>•</span>
-          <span>Instant ID Card OCR</span>
-        </div>
-        <h2 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
-          Scan Student ID Card to Generate Official Academic Dossier (.xlsx)
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          Scan the student ID card using your mobile camera or upload a photo. The system automatically verifies card credentials, authenticates with the University Portal, and compiles a comprehensive verified Academic Dossier.
+    <!-- HERO SECTION (CodeChef style: Avatars, curly badge, big bold blue headline & action buttons) -->
+    <div class="text-center max-w-4xl mx-auto space-y-4 pt-2 sm:pt-4">
+      
+      <!-- Avatars Row -->
+      <div class="flex items-center justify-center -space-x-2 overflow-hidden mb-1">
+        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-slate-200 shadow-sm flex items-center justify-center text-xs font-bold text-slate-600">🎓</div>
+        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-blue-100 shadow-sm flex items-center justify-center text-xs font-bold text-blue-600">AK</div>
+        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-emerald-100 shadow-sm flex items-center justify-center text-xs font-bold text-emerald-600">RK</div>
+        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-amber-100 shadow-sm flex items-center justify-center text-xs font-bold text-amber-600">PJ</div>
+        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-purple-100 shadow-sm flex items-center justify-center text-xs font-bold text-purple-600">SM</div>
+      </div>
+
+      <!-- { Trusted by 5M+ developers } style badge -->
+      <div class="text-xs sm:text-sm font-medium text-slate-700 tracking-wide">
+        <span class="text-amber-500 font-mono font-bold text-sm">{</span> Trusted by 50,000+ Students & Faculty <span class="text-amber-500 font-mono font-bold text-sm">}</span>
+      </div>
+
+      <!-- Master Programming with CodeChef style subtitle above -->
+      <h2 class="text-lg sm:text-2xl font-bold text-slate-800 tracking-tight">
+        Master Academic Records with University Bureau
+      </h2>
+
+      <!-- Bored of Theory? Let's Code for Real style large vibrant blue headline -->
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-blue-600 tracking-tight leading-[1.15]">
+        Bored of Theory? Let’s Code for Real
+      </h1>
+
+      <!-- Subtitle description lines -->
+      <div class="space-y-1 pt-1 max-w-2xl mx-auto">
+        <p class="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
+          Join 50,000+ students building profiles, verifying records, and generating official dossiers.
+        </p>
+        <p class="text-slate-500 text-xs sm:text-sm">
+          Kickstart Your Academic Dossier – No Boring Forms, Just Real OCR Speed!
         </p>
       </div>
+
+      <!-- Hero Action Buttons (Sign in / Explore style) -->
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-3">
+        <button 
+          type="button"
+          onclick="scrollToScanner('camera')" 
+          class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-sm shadow-md shadow-blue-500/20 inline-flex items-center space-x-2 transition"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+          <span>Live Camera Scan</span>
+        </button>
+        <button 
+          type="button"
+          onclick="scrollToScanner('upload')" 
+          class="px-6 py-2.5 rounded-lg bg-white hover:bg-slate-50 active:scale-95 text-slate-700 font-semibold text-sm border border-slate-200 shadow-sm inline-flex items-center space-x-2 transition"
+        >
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Upload Card Photo</span>
+        </button>
+      </div>
+
     </div>
 
-    <!-- Main Grid: Scanner Left, Verification Form Right -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
+    <!-- BOTTOM SECTION: Big floating card container matching screenshot -->
+    <div id="scannerMainCard" class="rounded-3xl border border-slate-200 bg-white/95 backdrop-blur-sm shadow-xl shadow-slate-200/60 p-4 sm:p-7 space-y-6">
 
-      <!-- LEFT: ID Card Scanner (Col 7) -->
-      <div class="lg:col-span-7 bg-portal-900 border border-portal-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
-        
-        <!-- Mode Switcher -->
-        <div class="flex items-center justify-between border-b border-portal-800 pb-3 sm:pb-4">
-          <div class="flex items-center space-x-2 text-sm font-semibold text-white">
-            <svg class="w-5 h-5 text-portal-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-            <span>Step 1: ID Card Input</span>
-          </div>
-
-          <div class="inline-flex p-1 rounded-lg bg-portal-950 border border-portal-800 text-xs font-medium">
-            <button id="btnTabCamera" onclick="switchScanTab('camera')" class="px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition">
-              Live Camera
-            </button>
-            <button id="btnTabUpload" onclick="switchScanTab('upload')" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">
-              Upload Photo
-            </button>
-          </div>
+      <!-- Breadcrumb Bar (like 'This path is a part of Python with Beginner DSA ⚡ | View Roadmap') -->
+      <div class="flex items-center justify-between text-xs font-medium text-slate-500 border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+          <span class="text-slate-700 font-semibold">This scanner is part of University UMS Bureau</span>
+          <span class="hidden sm:inline text-slate-400">•</span>
+          <span class="hidden sm:inline text-slate-500">Autonomous Dossier Engine</span>
         </div>
+        <a href="#telemetrySection" class="text-blue-600 hover:text-blue-700 font-medium inline-flex items-center space-x-1">
+          <span>View Pipeline</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
 
-        <!-- CAMERA VIEWPORT -->
-        <div id="viewCamera" class="space-y-3 sm:space-y-4">
-          <div class="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-black rounded-2xl overflow-hidden border border-slate-700 flex items-center justify-center shadow-inner">
-            
-            <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover hidden"></video>
-            
-            <div id="cameraPlaceholder" class="text-center p-6 space-y-3">
-              <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-400 mx-auto flex items-center justify-center">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-white">Camera Access Required</p>
-                <p class="text-xs text-slate-400 mt-0.5">Tap below to start mobile ID card scanner</p>
-              </div>
-              <button onclick="startCamera()" class="px-5 py-3 rounded-xl bg-portal-accent hover:bg-portal-accentHover active:scale-95 text-white text-xs font-bold shadow-lg transition inline-flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                <span>Launch Camera Scanner</span>
-              </button>
-            </div>
+      <!-- Main Two-Column Grid: Left Dark Card & Right Certificate Card -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
-            <!-- ID Card Overlay Guide Frame -->
-            <div id="scannerOverlay" class="absolute inset-0 pointer-events-none hidden flex items-center justify-center p-4 sm:p-6">
-              <div class="relative w-[90%] sm:w-4/5 h-[85%] sm:h-4/5 border-2 border-dashed border-emerald-400/80 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.25)]">
-                <!-- Laser line -->
-                <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_12px_#10B981]"></div>
-                <!-- Corner marks -->
-                <div class="absolute -top-1 -left-1 w-5 h-5 border-t-2 border-l-2 border-emerald-400"></div>
-                <div class="absolute -top-1 -right-1 w-5 h-5 border-t-2 border-r-2 border-emerald-400"></div>
-                <div class="absolute -bottom-1 -left-1 w-5 h-5 border-b-2 border-l-2 border-emerald-400"></div>
-                <div class="absolute -bottom-1 -right-1 w-5 h-5 border-b-2 border-r-2 border-emerald-400"></div>
-                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-300 bg-black/75 px-2.5 py-1 rounded-md backdrop-blur border border-emerald-500/30">
-                  Align ID Card Inside Frame
+        <!-- LEFT CARD (Col 7) - Sleek Dark Navy Card (like CodeChef Course Card) -->
+        <div class="lg:col-span-7 bg-[#0F172A] border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl text-white space-y-4 flex flex-col justify-between">
+          
+          <div class="space-y-4">
+            <!-- Top Row: Icon + Badges -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 font-black text-lg flex items-center justify-center shadow-md shrink-0">
+                🪪
+              </div>
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-medium">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                  <span>Certification Available</span>
+                </span>
+                <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
+                  <span>★</span>
+                  <span>4.9 (71.8k+)</span>
                 </span>
               </div>
             </div>
 
-            <!-- Hidden canvas for snapshot capture -->
-            <canvas id="captureCanvas" class="hidden"></canvas>
+            <!-- Title & Subtitle -->
+            <div>
+              <h3 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Scan Student ID Card
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                Capture card using high-speed mobile rear camera or upload from gallery. Multi-pass OCR with auto-rotation (90°/270°) and 1D barcode scanner.
+              </p>
+            </div>
+
+            <!-- Key metrics row (like '37 Lessons • 10 Hours • 240 Problems') -->
+            <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-300 pt-2 border-t border-slate-800">
+              <span class="flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span>34 Fields</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>&lt; 5s Scan</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span>50k+ Scans</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                <span class="text-blue-300 font-semibold">Beginner Friendly</span>
+              </span>
+            </div>
+
+            <!-- Mode Switcher Tabs -->
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs font-semibold text-slate-300">Input Mode:</span>
+              <div class="inline-flex p-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-medium">
+                <button id="btnTabCamera" onclick="switchScanTab('camera')" class="px-3 py-1.5 rounded-md bg-blue-600 text-white shadow transition">
+                  Live Camera
+                </button>
+                <button id="btnTabUpload" onclick="switchScanTab('upload')" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">
+                  Upload Photo
+                </button>
+              </div>
+            </div>
+
+            <!-- CAMERA VIEWPORT -->
+            <div id="viewCamera" class="space-y-3">
+              <div class="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-black rounded-2xl overflow-hidden border border-slate-700 flex items-center justify-center shadow-inner">
+                <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                
+                <div id="cameraPlaceholder" class="text-center p-6 space-y-3">
+                  <div class="w-14 h-14 rounded-full bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-white">Camera Access Required</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Tap below to start mobile ID card scanner</p>
+                  </div>
+                  <button onclick="startCamera()" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition inline-flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                    <span>Launch Camera Scanner</span>
+                  </button>
+                </div>
+
+                <!-- ID Card Overlay Guide Frame -->
+                <div id="scannerOverlay" class="absolute inset-0 pointer-events-none hidden flex items-center justify-center p-4 sm:p-6">
+                  <div class="relative w-[90%] sm:w-4/5 h-[85%] sm:h-4/5 border-2 border-dashed border-emerald-400/80 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.25)]">
+                    <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_12px_#10B981]"></div>
+                    <div class="absolute -top-1 -left-1 w-5 h-5 border-t-2 border-l-2 border-emerald-400"></div>
+                    <div class="absolute -top-1 -right-1 w-5 h-5 border-t-2 border-r-2 border-emerald-400"></div>
+                    <div class="absolute -bottom-1 -left-1 w-5 h-5 border-b-2 border-l-2 border-emerald-400"></div>
+                    <div class="absolute -bottom-1 -right-1 w-5 h-5 border-b-2 border-r-2 border-emerald-400"></div>
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-300 bg-black/75 px-2.5 py-1 rounded-md backdrop-blur border border-emerald-500/30">
+                      Align ID Card Inside Frame
+                    </span>
+                  </div>
+                </div>
+
+                <canvas id="captureCanvas" class="hidden"></canvas>
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
+                <button id="btnFlipCamera" onclick="flipCamera()" class="w-full sm:w-auto px-4 py-3 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-200 font-medium transition inline-flex items-center justify-center space-x-2 hidden border border-slate-700">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <span>Switch Camera</span>
+                </button>
+
+                <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 hidden">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                  <span>Capture & Scan Card</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- UPLOAD VIEWPORT -->
+            <div id="viewUpload" class="hidden space-y-4">
+              <label id="dropzone" for="fileInput" class="cursor-pointer block border-2 border-dashed border-slate-700 hover:border-blue-500/60 bg-slate-950/60 hover:bg-slate-950/90 active:bg-slate-900 rounded-2xl p-6 sm:p-8 text-center transition space-y-3">
+                <input 
+                  type="file" 
+                  id="fileInput" 
+                  accept="image/*" 
+                  class="sr-only" 
+                  onclick="this.value=null;" 
+                  onchange="handleFileSelect(event)" 
+                />
+                <div class="w-14 h-14 rounded-full bg-slate-800 text-slate-300 mx-auto flex items-center justify-center pointer-events-none">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="pointer-events-none">
+                  <p class="text-sm font-semibold text-white">Tap to upload or take ID card photo</p>
+                  <p class="text-xs text-slate-400 mt-1">Camera photo, JPG, PNG or screenshot (Clear & well-lit)</p>
+                </div>
+              </label>
+
+              <!-- Upload Preview Box -->
+              <div id="uploadPreviewBox" class="hidden space-y-3">
+                <div class="relative rounded-2xl overflow-hidden border border-slate-700 aspect-[4/3] sm:aspect-[16/10] bg-black flex items-center justify-center shadow-inner">
+                  <img id="uploadPreviewImg" class="w-full h-full object-contain cursor-pointer" onclick="triggerFilePicker()" alt="Uploaded ID Card Preview" title="Click to choose a different photo" />
+                  <button type="button" onclick="clearUploadedFile()" class="absolute top-2.5 right-2.5 p-2 rounded-full bg-black/80 hover:bg-black text-white text-xs border border-white/20 active:scale-95 shadow transition" title="Remove photo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                  <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-slate-700 text-xs font-semibold text-slate-200 transition flex items-center justify-center space-x-1.5">
+                    <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="truncate">Change</span>
+                  </button>
+
+                  <button type="button" onclick="rotateCurrentUploadedImage(90)" class="w-full py-2.5 px-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-slate-700 text-xs font-semibold text-amber-400 transition flex items-center justify-center space-x-1.5" title="Rotate image 90 degrees if card is sideways">
+                    <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span class="truncate">Rotate ↻</span>
+                  </button>
+
+                  <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-slate-700 text-xs font-semibold text-emerald-400 transition flex items-center justify-center space-x-1.5">
+                    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="truncate">Re-scan</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- OCR Processing State Bar -->
+            <div id="ocrProgressCard" class="hidden p-3.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs space-y-2">
+              <div class="flex items-center justify-between font-mono">
+                <div class="flex items-center space-x-2 text-blue-400 font-medium">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                  <span id="ocrStatusText">Tesseract OCR processing ID Card...</span>
+                </div>
+                <span id="ocrPercent" class="text-slate-400">0%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div id="ocrProgressBar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
-            <button id="btnFlipCamera" onclick="flipCamera()" class="w-full sm:w-auto px-4 py-3 rounded-xl bg-portal-800 active:bg-portal-700 text-slate-200 font-medium transition inline-flex items-center justify-center space-x-2 hidden border border-portal-700">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>Switch Camera (Front / Back)</span>
-            </button>
-
-            <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 hidden">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
-              <span>Capture & Scan Card</span>
-            </button>
+          <!-- Bottom card footer (like Your Progress in CodeChef screenshot) -->
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <span class="flex items-center space-x-1.5">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Instant AI OCR Engine</span>
+            </span>
+            <span class="font-mono text-slate-300">Ready</span>
           </div>
+
         </div>
 
-        <!-- UPLOAD VIEWPORT -->
-        <div id="viewUpload" class="hidden space-y-4">
-          <!-- Native Label dropzone: triggers file picker natively on tap/click without JS dependency -->
-          <label id="dropzone" for="fileInput" class="cursor-pointer block border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 active:bg-portal-900 rounded-2xl p-6 sm:p-8 text-center transition space-y-3">
-            <input 
-              type="file" 
-              id="fileInput" 
-              accept="image/*" 
-              class="sr-only" 
-              onclick="this.value=null;" 
-              onchange="handleFileSelect(event)" 
-            />
-            <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-300 mx-auto flex items-center justify-center pointer-events-none">
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </div>
-            <div class="pointer-events-none">
-              <p class="text-sm font-semibold text-white">Tap to upload or take ID card photo</p>
-              <p class="text-xs text-slate-400 mt-1">Camera photo, JPG, PNG or screenshot (Clear & well-lit)</p>
-            </div>
-          </label>
-
-          <!-- Upload Preview Box with Quick Action Buttons -->
-          <div id="uploadPreviewBox" class="hidden space-y-3">
-            <div class="relative rounded-2xl overflow-hidden border border-slate-700 aspect-[4/3] sm:aspect-[16/10] bg-black flex items-center justify-center shadow-inner">
-              <img id="uploadPreviewImg" class="w-full h-full object-contain cursor-pointer" onclick="triggerFilePicker()" alt="Uploaded ID Card Preview" title="Click to choose a different photo" />
-              <button type="button" onclick="clearUploadedFile()" class="absolute top-2.5 right-2.5 p-2 rounded-full bg-black/80 hover:bg-black text-white text-xs border border-white/20 active:scale-95 shadow transition" title="Remove photo">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
-
-            <!-- Action buttons below preview on mobile -->
-            <div class="grid grid-cols-3 gap-2">
-              <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-slate-200 transition flex items-center justify-center space-x-1.5">
-                <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span class="truncate">Change</span>
-              </button>
-
-              <button type="button" onclick="rotateCurrentUploadedImage(90)" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-amber-400 transition flex items-center justify-center space-x-1.5" title="Rotate image 90 degrees if card is sideways">
-                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span class="truncate">Rotate ↻</span>
-              </button>
-
-              <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-1.5 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-emerald-400 transition flex items-center justify-center space-x-1.5">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="truncate">Re-scan</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- OCR Processing State Bar -->
-        <div id="ocrProgressCard" class="hidden p-3.5 rounded-xl bg-portal-800/80 border border-portal-700 text-xs space-y-2">
-          <div class="flex items-center justify-between font-mono">
-            <div class="flex items-center space-x-2 text-blue-400 font-medium">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-              <span id="ocrStatusText">Tesseract OCR processing ID Card...</span>
-            </div>
-            <span id="ocrPercent" class="text-slate-400">0%</span>
-          </div>
-          <div class="w-full bg-portal-950 rounded-full h-1.5 overflow-hidden">
-            <div id="ocrProgressBar" class="bg-portal-accent h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- RIGHT: ID Card Authentication & Trigger (Col 5) -->
-      <div class="lg:col-span-5 bg-portal-900 border border-portal-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
-        
-        <div class="flex items-center justify-between border-b border-portal-800 pb-4">
-          <div class="flex items-center space-x-2 text-sm font-semibold text-white">
-            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            <span>Step 2: Card Verification</span>
-          </div>
-          <span id="badgeCardAuth" class="text-[10px] uppercase font-mono text-slate-400 bg-portal-950 px-2 py-0.5 rounded border border-portal-800 font-semibold">
-            Status: Standby
-          </span>
-        </div>
-
-        <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-4">
+        <!-- RIGHT CARD (Col 5) - Like Certificate preview card in screenshot -->
+        <div class="lg:col-span-5 bg-slate-50/70 border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5 flex flex-col justify-between">
           
-          <!-- Hidden credential inputs preserved for automated scraping -->
-          <input type="hidden" id="inputEnrollment" value="" />
-          <input type="hidden" id="inputDob" value="" />
-          <pre id="rawOcrText" class="hidden"></pre>
-
-          <!-- Interactive Card Verification Status Display -->
-          <div id="cardStatusCard" class="p-5 rounded-2xl bg-portal-950/80 border border-portal-800 space-y-3 transition">
-            <div class="flex items-center space-x-3">
-              <div id="authStatusIconBox" class="w-10 h-10 rounded-xl bg-portal-800 text-slate-400 flex items-center justify-center shrink-0 border border-portal-700 transition">
-                <svg id="iconLockState" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <svg id="iconCheckState" class="w-5 h-5 text-emerald-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <div class="space-y-4">
+            
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-2 text-sm font-bold text-slate-900">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Step 2: Card Verification</span>
               </div>
-              <div class="min-w-0 flex-1">
-                <h4 id="authStatusTitle" class="text-sm font-bold text-white">ID Card Pending</h4>
-                <p id="authStatusSub" class="text-xs text-slate-400 mt-0.5 truncate">Scan card with camera or upload card photo</p>
+              <span id="badgeCardAuth" class="text-[10px] uppercase font-mono text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 font-semibold shadow-xs">
+                Status: Standby
+              </span>
+            </div>
+
+            <!-- EXACT CERTIFICATE MOCKUP MATCHING CODECHEF SCREENSHOT -->
+            <div class="relative border border-slate-200 bg-white rounded-2xl p-5 text-center space-y-3.5 shadow-sm">
+              <!-- Golden Rosette Medal Ribbon -->
+              <div class="w-13 h-13 mx-auto rounded-full bg-amber-50 border-2 border-amber-300 flex items-center justify-center text-amber-500 shadow-sm p-2.5">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 011.332 1.332l-.8 1.599L18.667 11H20a1 1 0 110 2h-1.333l-1.582 3.954.8 1.599a1 1 0 01-1.332 1.332l-1.599-.8L11 20.677V22a1 1 0 11-2 0v-1.323l-3.954-1.582-1.599.8a1 1 0 01-1.332-1.332l.8-1.599L1.333 13H0a1 1 0 110-2h1.333l1.582-3.954-.8-1.599a1 1 0 011.332-1.332l1.599.8L9 3.323V2a1 1 0 011-1zm0 5a5 5 0 100 10 5 5 0 000-10z" clip-rule="evenodd"/></svg>
+              </div>
+
+              <div>
+                <h4 class="text-sm font-extrabold text-slate-900 tracking-tight">Certificate on Verification</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">Autonomous UMS Record Authenticity</p>
+              </div>
+
+              <!-- Decorative signature lines and seal -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between px-2 text-[10px] font-mono text-slate-400">
+                <div class="text-left">
+                  <div class="w-14 h-0.5 bg-slate-300 mb-1"></div>
+                  <span class="italic font-serif text-slate-600 text-[11px]">University</span>
+                </div>
+                <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold">
+                  <span>✓ Authenticated</span>
+                </div>
+                <div class="text-right">
+                  <div class="w-14 h-0.5 bg-slate-300 mb-1"></div>
+                  <span class="italic font-serif text-slate-600 text-[11px]">Registrar</span>
+                </div>
+              </div>
+
+              <!-- Included in portal style pill -->
+              <div class="pt-1 flex items-center justify-center space-x-1.5 text-[11px] text-slate-600">
+                <span class="text-slate-500">Verification available:</span>
+                <span class="px-2 py-0.5 rounded-md bg-amber-100/80 text-amber-800 font-semibold text-[10px] border border-amber-200">Included in portal</span>
               </div>
             </div>
 
-            <!-- Visual verification checklist/indicator -->
-            <div class="p-3 rounded-xl bg-portal-900 border border-portal-800/80 space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-400">Card Authenticity</span>
-                <span id="labelScanStatus" class="font-mono text-slate-500 font-medium">Waiting...</span>
+            <!-- Form with Hidden Inputs -->
+            <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-3.5">
+              
+              <input type="hidden" id="inputEnrollment" value="" />
+              <input type="hidden" id="inputDob" value="" />
+              <pre id="rawOcrText" class="hidden"></pre>
+
+              <!-- Interactive Card Verification Status Display -->
+              <div id="cardStatusCard" class="p-4 rounded-xl bg-white border border-slate-200 space-y-2.5 transition shadow-xs">
+                <div class="flex items-center space-x-3">
+                  <div id="authStatusIconBox" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 transition">
+                    <svg id="iconLockState" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <svg id="iconCheckState" class="w-4 h-4 text-emerald-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h5 id="authStatusTitle" class="text-xs font-bold text-slate-900">ID Card Pending</h5>
+                    <p id="authStatusSub" class="text-[11px] text-slate-500 mt-0.5 truncate">Scan card with camera or upload card photo</p>
+                  </div>
+                </div>
+
+                <!-- Visual verification progress -->
+                <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-500">Card Authenticity</span>
+                    <span id="labelScanStatus" class="font-mono text-slate-400 font-medium">Waiting...</span>
+                  </div>
+                  <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div id="cardAuthProgress" class="bg-slate-400 h-1.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+                  </div>
+                </div>
               </div>
-              <div class="w-full bg-portal-950 rounded-full h-1.5 overflow-hidden">
-                <div id="cardAuthProgress" class="bg-slate-700 h-1.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+
+              <!-- Real-Time Scanner Status / Warning Alert Banner -->
+              <div id="scanStatusAlert" class="hidden p-3.5 rounded-xl border text-xs space-y-1.5 transition-all">
+                <div class="flex items-center space-x-2 font-bold" id="scanAlertTitleBox">
+                  <span id="scanAlertIcon" class="text-base">⚠️</span>
+                  <span id="scanAlertTitle">Card Scan Incomplete</span>
+                </div>
+                <p id="scanAlertMessage" class="text-slate-600 leading-relaxed text-[11px]">
+                  Card could not be verified. Please re-scan or upload a clearer image.
+                </p>
               </div>
+
+              <!-- Primary Submit Button (Styled like Start Learning blue button) -->
+              <button 
+                type="submit" 
+                id="btnSubmit" 
+                disabled
+                class="w-full py-3.5 px-4 rounded-xl bg-slate-200 text-slate-400 font-bold text-sm tracking-wide border border-slate-300 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none"
+              >
+                <svg id="btnSubmitIconLock" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <svg id="btnSubmitIconLightning" class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span id="btnSubmitText">🔒 Scan ID Card to Unlock Dossier</span>
+              </button>
+            </form>
+
+          </div>
+
+          <div class="p-3 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-500 space-y-1 shadow-2xs">
+            <div class="flex items-center space-x-1.5 text-slate-700 font-medium">
+              <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+              <span>Invisible Browser Security</span>
             </div>
+            <p>Scraping runs in memory-safe headless Chrome directly on server. No personal details are stored permanently.</p>
           </div>
 
-          <!-- Real-Time Scanner Status / Warning Alert Banner -->
-          <div id="scanStatusAlert" class="hidden p-3.5 rounded-xl border text-xs space-y-1.5 transition-all">
-            <div class="flex items-center space-x-2 font-bold" id="scanAlertTitleBox">
-              <span id="scanAlertIcon" class="text-base">⚠️</span>
-              <span id="scanAlertTitle">Card Scan Incomplete</span>
-            </div>
-            <p id="scanAlertMessage" class="text-slate-300 leading-relaxed text-[11px]">
-              Card could not be verified. Please re-scan or upload a clearer image.
-            </p>
-          </div>
-
-          <!-- Primary Submit Button -->
-          <button 
-            type="submit" 
-            id="btnSubmit" 
-            disabled
-            class="w-full py-4 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none"
-          >
-            <svg id="btnSubmitIconLock" class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <svg id="btnSubmitIconLightning" class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span id="btnSubmitText">🔒 Scan ID Card to Unlock Dossier</span>
-          </button>
-        </form>
-
-        <div class="p-3 rounded-lg bg-portal-950/80 border border-portal-800 text-[11px] text-slate-400 space-y-1">
-          <div class="flex items-center space-x-1.5 text-slate-300 font-medium">
-            <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-            <span>Invisible Browser Security</span>
-          </div>
-          <p>Scraping runs in memory-safe headless Chrome directly on server. No personal details are stored permanently.</p>
         </div>
 
       </div>
@@ -340,77 +488,77 @@
     </div>
 
     <!-- LIVE EXTRACTION TELEMETRY PROGRESS (Shown during fetch) -->
-    <div id="telemetrySection" class="hidden bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-4">
-      <div class="flex items-center justify-between border-b border-portal-800 pb-3">
+    <div id="telemetrySection" class="hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center space-x-3">
-          <div class="w-3 h-3 rounded-full bg-blue-500 animate-ping"></div>
-          <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+          <div class="w-3 h-3 rounded-full bg-blue-600 animate-ping"></div>
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
             Invisible Browser Pipeline Status
           </h3>
         </div>
-        <span id="telemetryTimer" class="text-xs font-mono text-slate-400">0s elapsed</span>
+        <span id="telemetryTimer" class="text-xs font-mono text-slate-500">0s elapsed</span>
       </div>
 
       <!-- Live Step Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
         
-        <div id="stepCard1" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
-          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+        <div id="stepCard1" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
             <span>01. INIT</span>
             <span id="iconStep1">⏳</span>
           </div>
-          <p class="font-medium text-white">Headless Browser</p>
+          <p class="font-bold text-slate-800">Headless Browser</p>
           <p class="text-[10px] text-slate-500">Render sandbox launch</p>
         </div>
 
-        <div id="stepCard2" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
-          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+        <div id="stepCard2" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
             <span>02. AUTH</span>
             <span id="iconStep2">⏳</span>
           </div>
-          <p class="font-medium text-white">UMS Portal Login</p>
+          <p class="font-bold text-slate-800">UMS Portal Login</p>
           <p class="text-[10px] text-slate-500">Student switch & creds</p>
         </div>
 
-        <div id="stepCard3" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
-          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+        <div id="stepCard3" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
             <span>03. BYPASS</span>
             <span id="iconStep3">⏳</span>
           </div>
-          <p class="font-medium text-white">Notice Clearance</p>
+          <p class="font-bold text-slate-800">Notice Clearance</p>
           <p class="text-[10px] text-slate-500">Dismiss alerts & modal</p>
         </div>
 
-        <div id="stepCard4" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
-          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+        <div id="stepCard4" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
             <span>04. HARVEST</span>
             <span id="iconStep4">⏳</span>
           </div>
-          <p class="font-medium text-white">Academic Tabs</p>
+          <p class="font-bold text-slate-800">Academic Tabs</p>
           <p class="text-[10px] text-slate-500">Personal, parents, etc.</p>
         </div>
 
-        <div id="stepCard5" class="col-span-2 sm:col-span-1 p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
-          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+        <div id="stepCard5" class="col-span-2 sm:col-span-1 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
             <span>05. EXCEL</span>
             <span id="iconStep5">⏳</span>
           </div>
-          <p class="font-medium text-white">Excel Dossier</p>
+          <p class="font-bold text-slate-800">Excel Dossier</p>
           <p class="text-[10px] text-slate-500">Segoe UI styling</p>
         </div>
 
       </div>
 
-      <div class="p-3 rounded-lg bg-portal-950 text-xs font-mono text-slate-300 flex items-center space-x-2 border border-portal-800">
+      <div class="p-3 rounded-xl bg-slate-900 text-xs font-mono text-slate-200 flex items-center space-x-2 border border-slate-800">
         <span class="text-blue-400 font-bold">&gt;</span>
         <span id="liveStatusLog">Starting student dossier request...</span>
       </div>
     </div>
 
-    <!-- ERROR BANNER (If scraper fails) -->
-    <div id="errorCard" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs space-y-1">
-      <div class="font-bold flex items-center space-x-2 text-rose-200">
-        <svg class="w-4 h-4 text-rose-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+    <!-- ERROR BANNER -->
+    <div id="errorCard" class="hidden p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs space-y-1">
+      <div class="font-bold flex items-center space-x-2 text-rose-800">
+        <svg class="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
         <span>Extraction Error</span>
       </div>
       <p id="errorMsgText">Details could not be fetched. Check credentials.</p>
@@ -420,16 +568,16 @@
     <div id="resultsSection" class="hidden space-y-6">
 
       <!-- HERO EXCEL DOWNLOAD BANNER -->
-      <div class="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-portal-900 to-portal-950 p-4 sm:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6 shadow-2xl">
-        <div class="space-y-2 text-center sm:text-left">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono border border-emerald-500/30">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <div class="rounded-3xl border-2 border-emerald-400/40 bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-blue-50 p-6 sm:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6 shadow-md">
+        <div class="space-y-1.5 text-center sm:text-left">
+          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-mono border border-emerald-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
             <span>Extraction Complete & Verified</span>
           </div>
-          <h3 class="text-xl sm:text-2xl font-extrabold text-white">
+          <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900">
             Student Academic Dossier Ready (.xlsx)
           </h3>
-          <p id="resultsStats" class="text-xs text-slate-300">
+          <p id="resultsStats" class="text-xs text-slate-600">
             Total 34 fields extracted across 5 academic sections. Fees skipped.
           </p>
         </div>
@@ -438,43 +586,43 @@
           id="btnDownloadExcel" 
           href="#" 
           download 
-          class="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-extrabold text-sm tracking-wide shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-95"
+          class="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-600/20 transition flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-95"
         >
-          <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           <span>Download Excel Dossier (.xlsx)</span>
         </a>
       </div>
 
       <!-- STUDENT SUMMARY METRICS CARD -->
-      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
-        <h4 class="text-sm font-bold text-white uppercase tracking-wider font-mono border-b border-portal-800 pb-3">
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-3">
           Student Profile Overview
         </h4>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
-            <span class="text-[10px] font-mono text-slate-400 uppercase">Student Name</span>
-            <p id="sumName" class="text-sm font-bold text-white mt-0.5">--</p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-mono text-slate-500 uppercase">Student Name</span>
+            <p id="sumName" class="text-sm font-bold text-slate-900 mt-0.5 truncate">--</p>
           </div>
-          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
-            <span class="text-[10px] font-mono text-slate-400 uppercase">Enrollment No</span>
-            <p id="sumEnroll" class="text-sm font-mono font-bold text-blue-400 mt-0.5">--</p>
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-mono text-slate-500 uppercase">Enrollment No</span>
+            <p id="sumEnroll" class="text-sm font-mono font-bold text-blue-600 mt-0.5 truncate">--</p>
           </div>
-          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
-            <span class="text-[10px] font-mono text-slate-400 uppercase">Program / Degree</span>
-            <p id="sumProgram" class="text-sm font-bold text-white mt-0.5">--</p>
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-mono text-slate-500 uppercase">Program / Degree</span>
+            <p id="sumProgram" class="text-sm font-bold text-slate-900 mt-0.5 truncate">--</p>
           </div>
-          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
-            <span class="text-[10px] font-mono text-slate-400 uppercase">Domicile State</span>
-            <p id="sumDomicile" class="text-sm font-bold text-emerald-400 mt-0.5">--</p>
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-mono text-slate-500 uppercase">Domicile State</span>
+            <p id="sumDomicile" class="text-sm font-bold text-emerald-600 mt-0.5 truncate">--</p>
           </div>
         </div>
       </div>
 
       <!-- TABULAR DOSSIER ACCORDION / TABS -->
-      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-portal-800 pb-4">
-          <h4 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
             Detailed Dossier Fields
           </h4>
           <input 
@@ -482,7 +630,7 @@
             id="fieldSearch" 
             onkeyup="filterDossierFields()" 
             placeholder="Search any field..." 
-            class="px-3 py-1.5 rounded-lg bg-portal-950 border border-portal-700 text-xs text-white focus:outline-none focus:border-portal-accent w-full sm:w-64 font-mono"
+            class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white w-full sm:w-64 font-mono shadow-xs"
           />
         </div>
 
@@ -496,7 +644,7 @@
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-portal-800 py-8 text-center text-xs text-slate-500 font-mono mt-16">
+  <footer class="border-t border-slate-200/80 bg-white/60 py-8 text-center text-xs text-slate-500 font-mono mt-16">
     University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
   </footer>
 
@@ -510,6 +658,15 @@
     let timerInterval = null;
     let lastExtractedData = null;
 
+    // Smooth scroll from hero buttons to scanner card
+    function scrollToScanner(tab) {
+      const el = document.getElementById('scannerMainCard');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (tab) switchScanTab(tab);
+      if (tab === 'camera') startCamera();
+      else if (tab === 'upload') triggerFilePicker();
+    }
+
     // Switch between Camera and Upload
     function switchScanTab(tab) {
       const btnCam = document.getElementById('btnTabCamera');
@@ -518,12 +675,12 @@
       const viewUp = document.getElementById('viewUpload');
 
       if (tab === 'camera') {
-        btnCam.className = "px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition";
+        btnCam.className = "px-3 py-1.5 rounded-md bg-blue-600 text-white shadow transition";
         btnUp.className = "px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition";
         viewCam.classList.remove('hidden');
         viewUp.classList.add('hidden');
       } else {
-        btnUp.className = "px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition";
+        btnUp.className = "px-3 py-1.5 rounded-md bg-blue-600 text-white shadow transition";
         btnCam.className = "px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition";
         viewUp.classList.remove('hidden');
         viewCam.classList.add('hidden');
@@ -708,18 +865,18 @@
         if (!pill || !dot || !txt) return;
 
         if (data.status === 'connected') {
-          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[11px] font-mono shadow-sm";
-          dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-mono shadow-xs";
+          dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
           txt.innerText = `DB: Connected (${data.total_students_saved || 0})`;
           pill.title = `Connected to MongoDB database '${data.database}'. Total saved: ${data.total_students_saved || 0}`;
         } else if (data.status === 'not_configured') {
-          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[11px] font-mono";
-          dot.className = "w-2 h-2 rounded-full bg-amber-400";
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-mono";
+          dot.className = "w-2 h-2 rounded-full bg-amber-500";
           txt.innerText = "DB: Not Configured";
           pill.title = data.hint || "Set MONGODB_URI in Render Environment";
         } else {
-          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[11px] font-mono";
-          dot.className = "w-2 h-2 rounded-full bg-rose-400";
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-mono";
+          dot.className = "w-2 h-2 rounded-full bg-rose-500";
           txt.innerText = "DB: Disconnected";
           pill.title = `${data.message || 'Connection failed'}. Hint: ${data.hint || ''}`;
         }
@@ -1110,28 +1267,28 @@
       if (currentEnroll && currentDob) {
         // BOTH FOUND -> CARD AUTHENTICATED -> UNLOCK SUBMIT
         if (badgeCardAuth) {
-          badgeCardAuth.className = "text-[10px] uppercase font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 font-semibold";
+          badgeCardAuth.className = "text-[10px] uppercase font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300 font-semibold shadow-xs";
           badgeCardAuth.innerText = "Status: Authenticated";
         }
         if (cardStatusCard) {
-          cardStatusCard.className = "p-5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-3 transition";
+          cardStatusCard.className = "p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2.5 transition shadow-xs";
         }
         if (authIconBox) {
-          authIconBox.className = "w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40 transition";
+          authIconBox.className = "w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200 transition";
         }
         if (iconLock) iconLock.classList.add('hidden');
         if (iconCheck) iconCheck.classList.remove('hidden');
         if (authTitle) {
           authTitle.innerText = "ID Card Verified & Authenticated";
-          authTitle.className = "text-sm font-bold text-white";
+          authTitle.className = "text-xs font-bold text-slate-900";
         }
         if (authSub) {
           authSub.innerText = "Card authenticity verified. Ready to fetch academic dossier.";
-          authSub.className = "text-xs text-emerald-300 mt-0.5";
+          authSub.className = "text-[11px] text-emerald-700 mt-0.5";
         }
         if (labelScanStatus) {
           labelScanStatus.innerText = "Verified (100%)";
-          labelScanStatus.className = "font-mono text-emerald-400 font-semibold";
+          labelScanStatus.className = "font-mono text-emerald-700 font-semibold";
         }
         if (cardProgress) {
           cardProgress.className = "bg-emerald-500 h-1.5 rounded-full transition-all duration-300";
@@ -1141,7 +1298,7 @@
         // Unlock Submit Button
         if (btnSubmit) {
           btnSubmit.disabled = false;
-          btnSubmit.className = "w-full py-4 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover active:scale-95 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 cursor-pointer transition flex items-center justify-center space-x-2";
+          btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm tracking-wide shadow-md shadow-blue-500/20 cursor-pointer transition flex items-center justify-center space-x-2";
         }
         if (btnLockIcon) btnLockIcon.classList.add('hidden');
         if (btnLightningIcon) btnLightningIcon.classList.remove('hidden');
@@ -1149,16 +1306,16 @@
 
         // Verification success notification (no credentials shown)
         if (alertBox) {
-          alertBox.className = "p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1";
+          alertBox.className = "p-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs space-y-1 shadow-xs";
           alertBox.classList.remove('hidden');
         }
         if (alertIcon) alertIcon.innerText = "✅";
         if (alertTitle) {
-          alertTitle.className = "text-emerald-300 font-bold";
+          alertTitle.className = "text-emerald-800 font-bold";
           alertTitle.innerText = "Card Verified Successfully!";
         }
         if (alertMsg) {
-          alertMsg.className = "text-emerald-200/90 text-[11px] leading-relaxed";
+          alertMsg.className = "text-emerald-700 text-[11px] leading-relaxed";
           alertMsg.innerText = "Student ID Card verified and authenticated. Tap below to compile the official academic dossier.";
         }
 
@@ -1170,41 +1327,41 @@
 
         if (badgeCardAuth) {
           badgeCardAuth.className = isAttempted 
-            ? "text-[10px] uppercase font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 font-semibold"
-            : "text-[10px] uppercase font-mono text-slate-400 bg-portal-950 px-2 py-0.5 rounded border border-portal-800 font-semibold";
+            ? "text-[10px] uppercase font-mono text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 font-semibold"
+            : "text-[10px] uppercase font-mono text-slate-500 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 font-semibold shadow-xs";
           badgeCardAuth.innerText = isAttempted ? "Status: Verification Incomplete" : "Status: Standby";
         }
         if (cardStatusCard) {
-          cardStatusCard.className = "p-5 rounded-2xl bg-portal-950/80 border border-portal-800 space-y-3 transition";
+          cardStatusCard.className = "p-4 rounded-xl bg-white border border-slate-200 space-y-2.5 transition shadow-xs";
         }
         if (authIconBox) {
-          authIconBox.className = "w-10 h-10 rounded-xl bg-portal-800 text-slate-400 flex items-center justify-center shrink-0 border border-portal-700 transition";
+          authIconBox.className = "w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 transition";
         }
         if (iconLock) iconLock.classList.remove('hidden');
         if (iconCheck) iconCheck.classList.add('hidden');
         if (authTitle) {
           authTitle.innerText = isAttempted ? "ID Card Verification Incomplete" : "ID Card Pending";
-          authTitle.className = "text-sm font-bold text-white";
+          authTitle.className = "text-xs font-bold text-slate-900";
         }
         if (authSub) {
           authSub.innerText = isAttempted
             ? "Card could not be fully read. Tap Rotate ↻ or re-scan clearly."
             : "Scan card with camera or upload card photo";
-          authSub.className = "text-xs text-slate-400 mt-0.5 truncate";
+          authSub.className = "text-[11px] text-slate-500 mt-0.5 truncate";
         }
         if (labelScanStatus) {
           labelScanStatus.innerText = isAttempted ? "Waiting for clear scan..." : "Waiting...";
-          labelScanStatus.className = isAttempted ? "font-mono text-rose-400 font-medium" : "font-mono text-slate-500 font-medium";
+          labelScanStatus.className = isAttempted ? "font-mono text-rose-600 font-medium" : "font-mono text-slate-400 font-medium";
         }
         if (cardProgress) {
-          cardProgress.className = isAttempted ? "bg-rose-500/60 h-1.5 rounded-full transition-all duration-300" : "bg-slate-700 h-1.5 rounded-full transition-all duration-300";
+          cardProgress.className = isAttempted ? "bg-rose-500/80 h-1.5 rounded-full transition-all duration-300" : "bg-slate-200 h-1.5 rounded-full transition-all duration-300";
           cardProgress.style.width = isAttempted ? (currentEnroll || currentDob ? "50%" : "25%") : "10%";
         }
 
         // Lock button
         if (btnSubmit) {
           btnSubmit.disabled = true;
-          btnSubmit.className = "w-full py-4 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none";
+          btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-slate-200 text-slate-400 font-bold text-sm tracking-wide border border-slate-300 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none";
         }
         if (btnLockIcon) btnLockIcon.classList.remove('hidden');
         if (btnLightningIcon) btnLightningIcon.classList.add('hidden');
@@ -1212,16 +1369,16 @@
 
         if (isAttempted) {
           if (alertBox) {
-            alertBox.className = "p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs space-y-1";
+            alertBox.className = "p-3.5 rounded-xl border border-rose-300 bg-rose-50 text-xs space-y-1 shadow-xs";
             alertBox.classList.remove('hidden');
           }
           if (alertIcon) alertIcon.innerText = "⚠️";
           if (alertTitle) {
-            alertTitle.className = "text-rose-300 font-bold";
+            alertTitle.className = "text-rose-800 font-bold";
             alertTitle.innerText = "Card Scan Incomplete — Please Re-Scan!";
           }
           if (alertMsg) {
-            alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
+            alertMsg.className = "text-rose-700 text-[11px] leading-relaxed";
             alertMsg.innerText = "Card details could not be verified. Please align the card inside the frame or upload a sharp photo (tap Rotate ↻ if sideways).";
           }
         } else {
@@ -1364,13 +1521,13 @@
       if (!card || !icon) return;
 
       if (state === 'active') {
-        card.className = "p-3 rounded-xl bg-blue-500/10 border border-blue-500/40 text-xs space-y-1.5 opacity-100 shadow-md";
+        card.className = "p-3 rounded-xl bg-blue-50 border border-blue-400 text-xs space-y-1.5 opacity-100 shadow-sm";
         icon.innerText = "⚡";
       } else if (state === 'done') {
-        card.className = "p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1.5 opacity-100";
+        card.className = "p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-xs space-y-1.5 opacity-100";
         icon.innerText = "✅";
       } else if (state === 'error') {
-        card.className = "p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs space-y-1.5 opacity-100";
+        card.className = "p-3 rounded-xl bg-rose-50 border border-rose-300 text-xs space-y-1.5 opacity-100";
         icon.innerText = "❌";
       }
 
@@ -1496,33 +1653,33 @@
       let globalIndex = 1;
       for (const [secName, fields] of Object.entries(data.sections)) {
         const secDiv = document.createElement('div');
-        secDiv.className = "rounded-xl border border-portal-800 bg-portal-950/60 overflow-hidden";
+        secDiv.className = "rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs";
 
         let rowsHtml = '';
         fields.forEach(f => {
           const isEven = globalIndex % 2 === 0;
           rowsHtml += `
-            <tr class="${isEven ? 'bg-portal-900/40' : 'bg-transparent'} hover:bg-portal-800/40 transition field-row">
-              <td class="px-4 py-2 text-center font-mono text-xs text-slate-500 w-12">${globalIndex}</td>
-              <td class="px-4 py-2 font-semibold text-xs text-slate-200 w-2/5 field-key">${escapeHtml(f.field)}</td>
-              <td class="px-4 py-2 font-mono text-xs text-slate-300 field-val">${escapeHtml(f.value)}</td>
+            <tr class="${isEven ? 'bg-slate-50/70' : 'bg-white'} hover:bg-blue-50/50 transition field-row">
+              <td class="px-4 py-2.5 text-center font-mono text-xs text-slate-400 w-12">${globalIndex}</td>
+              <td class="px-4 py-2.5 font-semibold text-xs text-slate-800 w-2/5 field-key">${escapeHtml(f.field)}</td>
+              <td class="px-4 py-2.5 font-mono text-xs text-slate-600 field-val">${escapeHtml(f.value)}</td>
             </tr>
           `;
           globalIndex++;
         });
 
         secDiv.innerHTML = `
-          <div class="px-4 py-2.5 bg-portal-800/60 border-b border-portal-800 flex items-center justify-between">
-            <span class="text-xs font-bold text-blue-400 uppercase tracking-wider font-mono">◆ ${escapeHtml(secName)}</span>
-            <span class="text-[11px] font-mono text-slate-400">${fields.length} records</span>
+          <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-600 uppercase tracking-wider font-mono">◆ ${escapeHtml(secName)}</span>
+            <span class="text-[11px] font-mono text-slate-500">${fields.length} records</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead>
-                <tr class="border-b border-portal-800/60 text-[10px] font-mono uppercase text-slate-500">
-                  <th class="px-4 py-1.5 text-center">#</th>
-                  <th class="px-4 py-1.5">Field / Attribute</th>
-                  <th class="px-4 py-1.5">Extracted Value</th>
+                <tr class="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500 bg-slate-50/50">
+                  <th class="px-4 py-2 text-center">#</th>
+                  <th class="px-4 py-2">Field / Attribute</th>
+                  <th class="px-4 py-2">Extracted Value</th>
                 </tr>
               </thead>
               <tbody>
