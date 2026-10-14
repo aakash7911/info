@@ -9,3 +9,5 @@ services:
         value: 3.11.8
       - key: SELENIUM_CACHE_DIR
         value: /tmp/.selenium
+      - key: MONGODB_URI
+        sync: false

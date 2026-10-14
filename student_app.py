@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from student_scraper import scrape_student_data, DOSSIERS_DIR
+from mongo_service import save_student_dossier, check_mongo_health
 
 logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -47,17 +48,25 @@ async def serve_scanner_ui():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint for Render / monitoring."""
+    db_health = check_mongo_health()
     return {
         "status": "healthy",
         "service": "student-dossier-gateway",
-        "browser_engine": "headless-chromium"
+        "browser_engine": "headless-chromium",
+        "mongodb": db_health
     }
 
+@app.get("/api/db/status")
+async def db_status():
+    """Returns detailed status of MongoDB connection for admin/mongosh verification."""
+    return check_mongo_health()
+
 @app.post("/api/scrape")
-async def trigger_student_scrape(payload: ScrapeRequest):
+async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     """
     Triggers the headless browser automation to log into UMS,
-    harvest all student tabs, and compile an Excel workbook.
+    harvest all student tabs, compile an Excel workbook,
+    and persist the entire record to MongoDB.
     """
     enrollment = payload.enrollment_no.strip()
     dob = payload.dob.strip()
@@ -74,6 +83,12 @@ async def trigger_student_scrape(payload: ScrapeRequest):
         error_msg = result.get("error") or "Failed to extract student profile from UMS."
         logger.error(f"Scraping failed: {error_msg}")
         return JSONResponse(status_code=422, content=result)
+
+    # Persist student data & audit log into MongoDB
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    saved_to_db = save_student_dossier(result=result, client_ip=client_ip, user_agent=user_agent)
+    result["saved_to_mongo"] = saved_to_db
 
     return JSONResponse(status_code=200, content=result)
 

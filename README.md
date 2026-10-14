@@ -18,3 +18,26 @@ Open [http://localhost:8000](http://localhost:8000)
 ## Render Deployment
 - **Runtime**: Docker (Recommended) or Python 3
 - **Start Command**: `uvicorn student_app:app --host 0.0.0.0 --port $PORT`
+
+## MongoDB & mongosh Integration
+Set the environment variable `MONGODB_URI` (or `MONGO_URI`):
+```bash
+export MONGODB_URI="mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority"
+```
+
+### Inspect Saved Data with mongosh:
+Connect to your MongoDB cluster via `mongosh`:
+```bash
+mongosh "mongodb+srv://<username>:<password>@cluster0.mongodb.net/student_dossier_db"
+```
+
+Query saved student dossiers:
+```javascript
+use student_dossier_db
+
+// View all extracted student profiles
+db.students.find().pretty()
+
+// View access & scrape audit history logs
+db.scrape_history.find().sort({ extracted_at: -1 }).pretty()
+```
