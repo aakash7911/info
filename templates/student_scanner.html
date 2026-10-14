@@ -193,22 +193,46 @@
 
         <!-- UPLOAD VIEWPORT -->
         <div id="viewUpload" class="hidden space-y-4">
-          <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="cursor-pointer border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 active:bg-portal-900 rounded-2xl p-6 sm:p-8 text-center transition space-y-3">
-            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
-            <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-300 mx-auto flex items-center justify-center">
+          <!-- Native Label dropzone: triggers file picker natively on tap/click without JS dependency -->
+          <label id="dropzone" for="fileInput" class="cursor-pointer block border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 active:bg-portal-900 rounded-2xl p-6 sm:p-8 text-center transition space-y-3">
+            <input 
+              type="file" 
+              id="fileInput" 
+              accept="image/*" 
+              class="sr-only" 
+              onclick="this.value=null;" 
+              onchange="handleFileSelect(event)" 
+            />
+            <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-300 mx-auto flex items-center justify-center pointer-events-none">
               <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-sm font-semibold text-white">Tap to upload or take ID card photo</p>
-              <p class="text-xs text-slate-400 mt-1">PNG, JPG, JPEG or camera photo (Clear & well-lit)</p>
+              <p class="text-xs text-slate-400 mt-1">Camera photo, JPG, PNG or screenshot (Clear & well-lit)</p>
             </div>
-          </div>
+          </label>
 
-          <div id="uploadPreviewBox" class="hidden relative rounded-2xl overflow-hidden border border-slate-700 aspect-[4/3] sm:aspect-[16/10] bg-black">
-            <img id="uploadPreviewImg" class="w-full h-full object-contain" alt="Uploaded ID Card Preview" />
-            <button onclick="clearUploadedFile()" class="absolute top-2 right-2 p-2 rounded-full bg-black/75 hover:bg-black text-white text-xs border border-white/20 active:scale-95">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+          <!-- Upload Preview Box with Quick Action Buttons -->
+          <div id="uploadPreviewBox" class="hidden space-y-3">
+            <div class="relative rounded-2xl overflow-hidden border border-slate-700 aspect-[4/3] sm:aspect-[16/10] bg-black flex items-center justify-center shadow-inner">
+              <img id="uploadPreviewImg" class="w-full h-full object-contain cursor-pointer" onclick="triggerFilePicker()" alt="Uploaded ID Card Preview" title="Click to choose a different photo" />
+              <button type="button" onclick="clearUploadedFile()" class="absolute top-2.5 right-2.5 p-2 rounded-full bg-black/80 hover:bg-black text-white text-xs border border-white/20 active:scale-95 shadow transition" title="Remove photo">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- Action buttons below preview on mobile -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-3 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-slate-200 transition flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Change Photo</span>
+              </button>
+
+              <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-3 rounded-xl bg-portal-800 hover:bg-portal-700 active:bg-portal-900 border border-portal-700 text-xs font-semibold text-emerald-400 transition flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Re-scan Photo</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -582,28 +606,63 @@
       await processImageWithOCR(dataUrl);
     }
 
+    let currentUploadedDataUrl = null;
+
     // File Upload Handling
     async function handleFileSelect(e) {
-      const file = e.target.files[0];
+      let file = null;
+      if (e && e.target && e.target.files && e.target.files.length > 0) {
+        file = e.target.files[0];
+      } else if (e && e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        file = e.dataTransfer.files[0];
+      }
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = async function(evt) {
         const dataUrl = evt.target.result;
-        document.getElementById('dropzone').classList.add('hidden');
+        currentUploadedDataUrl = dataUrl;
+
+        // Display preview box and hide initial dropzone
+        const dropzone = document.getElementById('dropzone');
         const previewBox = document.getElementById('uploadPreviewBox');
-        document.getElementById('uploadPreviewImg').src = dataUrl;
-        previewBox.classList.remove('hidden');
+        const previewImg = document.getElementById('uploadPreviewImg');
+        if (dropzone) dropzone.classList.add('hidden');
+        if (previewImg) previewImg.src = dataUrl;
+        if (previewBox) previewBox.classList.remove('hidden');
 
         await processImageWithOCR(dataUrl);
+      };
+      reader.onerror = function() {
+        alert("Could not load selected image file. Please try again with another photo.");
       };
       reader.readAsDataURL(file);
     }
 
     function clearUploadedFile() {
-      document.getElementById('fileInput').value = '';
-      document.getElementById('uploadPreviewBox').classList.add('hidden');
-      document.getElementById('dropzone').classList.remove('hidden');
+      currentUploadedDataUrl = null;
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+      const previewBox = document.getElementById('uploadPreviewBox');
+      const dropzone = document.getElementById('dropzone');
+      if (previewBox) previewBox.classList.add('hidden');
+      if (dropzone) dropzone.classList.remove('hidden');
+    }
+
+    function triggerFilePicker() {
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+      }
+    }
+
+    async function reprocessCurrentUploadedImage() {
+      if (currentUploadedDataUrl) {
+        await processImageWithOCR(currentUploadedDataUrl);
+      } else {
+        triggerFilePicker();
+      }
     }
 
     // Drag and drop listeners
@@ -658,36 +717,90 @@
       } catch (e) {}
     }
 
-    // Preprocess image on canvas (sharpen & contrast boost for OCR)
-    function enhanceImageForOCR(dataUrl) {
+    // Scale image cleanly to optimal OCR resolution (1600px max dimension, preserving aspect ratio)
+    function prepareImageCanvas(dataUrl, maxDim = 1600) {
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement('canvas');
           let w = img.width;
           let h = img.height;
-          // Scale up to crisp 1400px width if small
-          if (w < 1400) {
-            const scale = 1400 / w;
-            w = 1400;
-            h = Math.round(h * scale);
-          }
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
+          if (!w || !h) return resolve(dataUrl);
 
-          // Contrast boost for text readability
-          const imgData = ctx.getImageData(0, 0, w, h);
-          const d = imgData.data;
-          for (let i = 0; i < d.length; i += 4) {
-            const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-            // S-curve contrast stretch
-            const val = gray > 130 ? Math.min(255, gray * 1.15) : Math.max(0, gray * 0.85);
-            d[i] = val;
-            d[i + 1] = val;
-            d[i + 2] = val;
+          const longest = Math.max(w, h);
+          let scale = 1;
+          if (longest > maxDim) {
+            scale = maxDim / longest;
+          } else if (longest < 1000) {
+            scale = 1200 / longest;
           }
+
+          const targetW = Math.round(w * scale);
+          const targetH = Math.round(h * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+
+          resolve(canvas.toDataURL('image/jpeg', 0.92));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
+    // Min-Max Dynamic Range Contrast Normalization for Pass 2 (preserves natural gradients)
+    function enhanceContrastForOCR(dataUrl, maxDim = 1600) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (!w || !h) return resolve(dataUrl);
+
+          const longest = Math.max(w, h);
+          let scale = 1;
+          if (longest > maxDim) {
+            scale = maxDim / longest;
+          } else if (longest < 1000) {
+            scale = 1200 / longest;
+          }
+
+          const targetW = Math.round(w * scale);
+          const targetH = Math.round(h * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+
+          const imgData = ctx.getImageData(0, 0, targetW, targetH);
+          const d = imgData.data;
+
+          // Compute min & max luminance using step-sampling for speed
+          let minL = 255;
+          let maxL = 0;
+          for (let i = 0; i < d.length; i += 16) {
+            const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            if (lum < minL) minL = lum;
+            if (lum > maxL) maxL = lum;
+          }
+
+          const range = Math.max(30, maxL - minL);
+          for (let i = 0; i < d.length; i += 4) {
+            const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            let stretched = Math.round(((lum - minL) / range) * 255);
+            if (stretched < 0) stretched = 0;
+            if (stretched > 255) stretched = 255;
+            d[i] = stretched;
+            d[i + 1] = stretched;
+            d[i + 2] = stretched;
+          }
+
           ctx.putImageData(imgData, 0, 0);
           resolve(canvas.toDataURL('image/jpeg', 0.92));
         };
@@ -696,8 +809,32 @@
       });
     }
 
-    // Core OCR Execution (Tesseract.js in Browser)
-    async function processImageWithOCR(imageData) {
+    // 90-degree canvas rotation for Pass 3 (handles vertical/sideways mobile photos)
+    function rotateImageCanvas(dataUrl, angleDegrees = 90) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (angleDegrees === 90 || angleDegrees === 270) {
+            canvas.width = img.height;
+            canvas.height = img.width;
+          } else {
+            canvas.width = img.width;
+            canvas.height = img.height;
+          }
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((angleDegrees * Math.PI) / 180);
+          ctx.drawImage(img, -img.width / 2, -img.height / 2);
+          resolve(canvas.toDataURL('image/jpeg', 0.92));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
+    // Core Multi-Pass OCR Execution (Tesseract.js)
+    async function processImageWithOCR(rawImageData) {
       if (isOcrRunning) return;
       isOcrRunning = true;
 
@@ -708,27 +845,32 @@
 
       progressCard.classList.remove('hidden');
       progressBar.className = 'bg-portal-accent h-1.5 rounded-full transition-all duration-300';
-      progressBar.style.width = '15%';
-      progressPercent.innerText = '15%';
-      statusText.innerText = 'Enhancing image quality...';
+      progressBar.style.width = '10%';
+      progressPercent.innerText = '10%';
+      statusText.innerText = 'Preparing image for OCR...';
+
       const scanAlert = document.getElementById('scanStatusAlert');
       if (scanAlert) scanAlert.classList.add('hidden');
 
+      let combinedEnrollment = '';
+      let combinedDob = '';
+      let combinedText = '';
+
       try {
-        const enhancedData = await enhanceImageForOCR(imageData);
+        // --- PASS 1: Clean Scaled Image (preserves original color text & edges) ---
+        const cleanData = await prepareImageCanvas(rawImageData, 1600);
+        statusText.innerText = 'Reading ID Card (Pass 1)...';
+        progressBar.style.width = '25%';
+        progressPercent.innerText = '25%';
 
-        statusText.innerText = 'Reading ID Card with OCR...';
-        progressBar.style.width = '35%';
-        progressPercent.innerText = '35%';
-
-        const res = await Tesseract.recognize(
-          enhancedData,
+        const res1 = await Tesseract.recognize(
+          cleanData,
           'eng',
           {
             logger: m => {
               if (m.status === 'recognizing text') {
-                const p = Math.round(m.progress * 100);
-                progressBar.style.width = `${Math.max(15, p)}%`;
+                const p = Math.round(m.progress * 45) + 20; // 20% to 65%
+                progressBar.style.width = `${p}%`;
                 progressPercent.innerText = `${p}%`;
                 statusText.innerText = `Scanning ID Card (${p}%)...`;
               }
@@ -736,16 +878,62 @@
           }
         );
 
-        const rawText = res.data.text || '';
-        document.getElementById('rawOcrText').innerText = rawText;
+        const text1 = res1.data.text || '';
+        combinedText = text1;
+        const parsed1 = extractCredentialsFromText(text1);
+        combinedEnrollment = parsed1.foundEnrollment || '';
+        combinedDob = parsed1.foundDob || '';
 
-        // Parse Enrollment & DOB with Enhanced Regex
-        const { foundEnrollment, foundDob } = extractCredentialsFromText(rawText);
+        // --- PASS 2: Dynamic Contrast Normalization (if either field missing) ---
+        if (!combinedEnrollment || !combinedDob) {
+          statusText.innerText = 'Deep scanning missing credentials (Pass 2)...';
+          progressBar.style.width = '70%';
+          progressPercent.innerText = '70%';
 
-        const isBothComplete = updateCredentialState(foundEnrollment, foundDob);
+          const enhancedData = await enhanceContrastForOCR(rawImageData, 1600);
+          const res2 = await Tesseract.recognize(
+            enhancedData,
+            'eng',
+            {
+              logger: m => {
+                if (m.status === 'recognizing text') {
+                  const p = Math.round(m.progress * 20) + 70; // 70% to 90%
+                  progressBar.style.width = `${p}%`;
+                  progressPercent.innerText = `${p}%`;
+                  statusText.innerText = `Scanning deep contrast (${p}%)...`;
+                }
+              }
+            }
+          );
+
+          const text2 = res2.data.text || '';
+          combinedText += '\n--- PASS 2 ---\n' + text2;
+          const parsed2 = extractCredentialsFromText(text2);
+          if (!combinedEnrollment && parsed2.foundEnrollment) combinedEnrollment = parsed2.foundEnrollment;
+          if (!combinedDob && parsed2.foundDob) combinedDob = parsed2.foundDob;
+        }
+
+        // --- PASS 3: 90° Orientation Fallback (if still missing) ---
+        if (!combinedEnrollment || !combinedDob) {
+          statusText.innerText = 'Checking rotated orientation (Pass 3)...';
+          progressBar.style.width = '90%';
+          progressPercent.innerText = '90%';
+
+          const rotatedData = await rotateImageCanvas(rawImageData, 90);
+          const res3 = await Tesseract.recognize(rotatedData, 'eng');
+          const text3 = res3.data.text || '';
+          combinedText += '\n--- PASS 3 (Rotated) ---\n' + text3;
+          const parsed3 = extractCredentialsFromText(text3);
+          if (!combinedEnrollment && parsed3.foundEnrollment) combinedEnrollment = parsed3.foundEnrollment;
+          if (!combinedDob && parsed3.foundDob) combinedDob = parsed3.foundDob;
+        }
+
+        document.getElementById('rawOcrText').innerText = combinedText;
+
+        const isBothComplete = updateCredentialState(combinedEnrollment, combinedDob);
 
         if (isBothComplete) {
-          statusText.innerText = `Verified: ${foundEnrollment} | ${foundDob}`;
+          statusText.innerText = `Verified: ${combinedEnrollment} | ${combinedDob}`;
           progressBar.className = 'bg-emerald-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = '100%';
@@ -768,10 +956,10 @@
 
       } catch (err) {
         console.error("OCR error:", err);
-        statusText.innerText = 'OCR scan error. Please re-scan with a clearer image.';
+        statusText.innerText = 'OCR scan error: ' + (err.message || 'Please upload a clearer image.');
         progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
-        updateCredentialState("", "");
-        setTimeout(() => progressCard.classList.add('hidden'), 3500);
+        updateCredentialState(combinedEnrollment, combinedDob);
+        setTimeout(() => progressCard.classList.add('hidden'), 4000);
       } finally {
         isOcrRunning = false;
       }
@@ -883,72 +1071,98 @@
       let foundEnrollment = "";
       let foundDob = "";
 
-      // Normalize common OCR spacing issues (e.g. "XX UG XXXXXX" -> "XXUGXXXXXX")
-      let cleanText = text
-        .replace(/([0-9]{2})\s*([uUjJtTvV][gG]|[pP][gG]|[dD][iI][pP]|[pP][hH][dD])\s*([0-9a-zA-Z]{4,10})/g, '$1$2$3')
-        .replace(/([0-9]{2})\s+([0-9]{6,12})/g, '$1$2');
+      // 1. Clean and normalize text
+      // Replace delimiters, card edge artifacts (pipes, brackets, asterisks, exclamations, guillemets)
+      let normalized = text
+        .replace(/[\|\[\]\{\}\*\~\!\:\;\`\'\«\»\‹\›\—\–\_]+/g, ' ')
+        .replace(/[\u2010-\u2015]/g, '-');
 
-      // 1. Enrollment / UG / PG Number Extraction
-      const ugPattern = /\b([0-9]{2}\s*(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,8})\b/gi;
-      const allUgMatches = [...cleanText.matchAll(ugPattern)];
+      // Strip false leading OCR artifacts directly touching 2-digit years (e.g. "I26UG" -> " 26UG", "l26UG" -> " 26UG")
+      normalized = normalized.replace(/(?:^|\s)[Il|!1]([0-9]{2}(?:UG|PG|DIP|PHD|[0OoJjVvU][GgCc6]))/gi, ' $1');
 
-      if (allUgMatches.length > 0) {
-        // Pick clean match (e.g. 26UG033233)
-        foundEnrollment = allUgMatches[0][1].replace(/\s+/g, '').toUpperCase().trim();
-      } else {
-        // Fuzzy match in case 1, I or | got inserted between year and UG (e.g. 261JG -> 26UG, 261UG -> 26UG)
-        const fuzzy = cleanText.match(/\b([0-9]{2})\s*[1lI|]?\s*([uUjJtTvV][gG]|[pP][gG])\s*([0-9A-Z]{4,8})\b/i);
-        if (fuzzy) {
-          const normType = /^[jJtTvV]g$/i.test(fuzzy[2]) ? 'UG' : fuzzy[2].toUpperCase();
-          foundEnrollment = (fuzzy[1] + normType + fuzzy[3]).toUpperCase();
-        } else {
-          // General enrollment numbers (10-15 digits or alphanumeric)
-          const generalRegexes = [
-            /(?:enrollment|enroll|ug\s*no|roll|reg|student\s*id|id)[\s\.:#-]*([0-9A-Z]{6,16})/i,
-            /\b([0-9]{2}[A-Z]{2,3}[0-9A-Z]{4,10})\b/i,
-            /\b(19|20|21|22|23|24|25|26)[0-9]{8,13}\b/,
-            /\b[0-9]{10,15}\b/
-          ];
-          for (const rx of generalRegexes) {
-            const m = cleanText.match(rx);
-            if (m) {
-              foundEnrollment = (m[1] || m[0]).replace(/\s+/g, '').toUpperCase().trim();
-              break;
-            }
-          }
-        }
-      }
+      // Pre-normalize OCR letter-digit confusions specifically in UG patterns
+      let enrollClean = normalized
+        .replace(/([0-9]{2})\s*[-_]?\s*(?:[1lI|]\s*)?([uU0OjJvV][gGcC6]|[pP][gGcC6]|[dD][iI1l][pP]|[pP][hH][dD])\s*[-_]?\s*([0-9a-zA-Z]{4,10})/gi, (m, y, t, num) => {
+          let normType = 'UG';
+          if (/^p/i.test(t)) normType = 'PG';
+          else if (/^d/i.test(t)) normType = 'DIP';
+          else if (/^ph/i.test(t)) normType = 'PHD';
+          return y + normType + num;
+        });
 
-      // 2. DOB Extraction without '-' or '/' (pure DDMMYYYY e.g. 01012008)
-      const dobRegexes = [
-        /\b([0-9]{1,2})[\/\-\.]([0-9]{1,2})[\/\-\.]([0-9]{4})\b/,
-        /(?:birth\s*date|dob|birth|d\.o\.b|date)[\s\.:#-]*([0-9]{1,2})[\/\-\.\s]+([0-9]{1,2})[\/\-\.\s]+([0-9]{2,4})/i,
-        /\b([0-9]{2})([0-9]{2})([0-9]{4})\b/
+      // Patterns for Enrollment Number
+      const enrollPatterns = [
+        // Direct UG/PG with 4-8 alphanumeric chars e.g. 26UG033233
+        /(?:^|[^\w])([0-9]{2}(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,8})(?:[^\w]|$)/i,
+        // With leading artifact e.g. I26UG033233
+        /(?:[Il|!])([0-9]{2}(?:UG|PG|DIP|PHD)[0-9A-Z]{4,8})(?:[^\w]|$)/i,
+        // Barcode or header with spaces or minor noise e.g. '26 UG 033233' or '26-UG-033233'
+        /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*(UG|PG|DIP|PHD)\s*[-_ ]?\s*([0-9A-Z]{4,8})(?:[^\w]|$)/i,
+        // Permissive UG/PG with O/0/J/V/C OCR substitutions
+        /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*([0OoJjVvU][GgCc6])\s*[-_ ]?\s*([0-9A-Za-z]{4,8})(?:[^\w]|$)/i,
+        // General enrollment numbers (e.g. 210303105001 or 10-15 digit roll numbers)
+        /(?:enrollment|enroll|ug\s*no|roll|reg|student\s*id|id\s*no)[\s\.:#-]*([0-9A-Z]{6,16})/i,
+        /(?:^|[^\w])((?:19|20|21|22|23|24|25|26)[0-9]{8,12})(?:[^\w]|$)/
       ];
 
-      for (const rx of dobRegexes) {
-        const m = cleanText.match(rx);
+      for (const rx of enrollPatterns) {
+        const m = enrollClean.match(rx);
         if (m) {
-          if (m[1] && m[2] && m[3]) {
-            let d = m[1].padStart(2, '0');
-            let mth = m[2].padStart(2, '0');
-            let yr = m[3];
-            if (yr.length === 2) {
-              yr = (parseInt(yr) > 30 ? '19' : '20') + yr;
-            }
-            foundDob = `${d}${mth}${yr}`; // Exact DDMMYYYY format without hyphens
+          if (m[2] && m[3]) {
+            let prefix = m[1];
+            let mid = m[2].toUpperCase();
+            if (/^[0OJVI]/.test(mid) || /[C6]$/.test(mid)) mid = 'UG';
+            let suf = m[3].toUpperCase();
+            suf = suf.replace(/O/g, '0').replace(/[ILl|!]/g, '1').replace(/Z/g, '2');
+            suf = suf.replace(/[^0-9A-Z]/g, '');
+            if (suf.length > 6) suf = suf.slice(0, 6);
+            foundEnrollment = (prefix + mid + suf).trim();
           } else {
-            foundDob = m[0].replace(/[^0-9]/g, '');
+            let val = (m[1] || m[0]).replace(/[^0-9A-Za-z]/g, '').toUpperCase().trim();
+            val = val.replace(/^([0-9]{2})[0OJVI][GC6]/, '$1UG');
+            if (/^[0-9]{2}(?:UG|PG|DIP)[0-9A-Z]{6,}/i.test(val)) {
+              val = val.slice(0, 10);
+            }
+            foundEnrollment = val;
           }
           break;
         }
       }
 
-      // Ensure DOB is pure digits and max 8 characters
-      if (foundDob) {
-        foundDob = foundDob.replace(/[^0-9]/g, '');
-        if (foundDob.length > 8) {
-          foundDob = foundDob.slice(0, 8);
+      // 2. DOB Extraction & Strict Validation (Day: 1-31, Month: 1-12, Year: 1980-2015)
+      const dobPatterns = [
+        // Explicit 'Birth Date' or 'DOB' prefix
+        /(?:birth\s*date|dob|birth|d\.o\.b|date\s*of\s*birth)[\s\.:#-]*([0-9OoIl]{1,2})[\/\-\.\s]+([0-9OoIl]{1,2})[\/\-\.\s]+([0-9OoIl]{2,4})/i,
+        // Spaced DD - MM - YYYY
+        /(?:^|[^\w])([0-9OoIl]{1,2})\s*[\/\-\.]\s*([0-9OoIl]{1,2})\s*[\/\-\.]\s*([0-9OoIl]{4})(?:[^\w]|$)/,
+        // Standard DD/MM/YYYY or DD-MM-YYYY
+        /(?:^|[^\w])([0-9OoIl]{1,2})[\/\-\.]([0-9OoIl]{1,2})[\/\-\.]([0-9OoIl]{4})(?:[^\w]|$)/,
+        // Spaced DD MM YYYY under 'Birth Date'
+        /(?:birth\s*date|dob|birth)[\s\.:#-]+([0-9OoIl]{1,2})\s+([0-9OoIl]{1,2})\s+([0-9OoIl]{4})/i,
+        // DD/MM/YY
+        /(?:^|[^\w])([0-9OoIl]{1,2})[\/\-\.]([0-9OoIl]{1,2})[\/\-\.]([0-9OoIl]{2})(?:[^\w]|$)/
+      ];
+
+      for (const rx of dobPatterns) {
+        const m = normalized.match(rx);
+        if (m) {
+          let rawD = m[1].replace(/[oO]/g, '0').replace(/[Il]/g, '1');
+          let rawM = m[2].replace(/[oO]/g, '0').replace(/[Il]/g, '1');
+          let rawY = m[3].replace(/[oO]/g, '0').replace(/[Il]/g, '1');
+
+          let d = parseInt(rawD, 10);
+          let mth = parseInt(rawM, 10);
+          let yr = parseInt(rawY, 10);
+
+          if (yr < 100) {
+            yr = yr > 30 ? 1900 + yr : 2000 + yr;
+          }
+
+          // Validate realistic day, month, student birth year
+          if (d >= 1 && d <= 31 && mth >= 1 && mth <= 12 && yr >= 1980 && yr <= 2015) {
+            foundDob = String(d).padStart(2, '0') + String(mth).padStart(2, '0') + String(yr);
+            break;
+          }
         }
       }
 
