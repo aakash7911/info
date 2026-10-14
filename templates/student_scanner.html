@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parul University — Student Dossier Portal</title>
+  <title>University — Student Dossier Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -59,11 +59,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm">
-          PU
+          UNI
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">PARUL UNIVERSITY</h1>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">UNIVERSITY</h1>
             <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-portal-800 text-slate-300 border border-slate-700">UMS Dossier</span>
           </div>
           <p class="text-xs text-slate-400">Automated Student Profile Extraction & Verification Portal</p>
@@ -462,7 +462,7 @@
 
   <!-- Footer -->
   <footer class="border-t border-portal-800 py-8 text-center text-xs text-slate-500 font-mono mt-16">
-    Parul University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
+    University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
   </footer>
 
   <!-- JAVASCRIPT CONTROLLER -->
@@ -653,7 +653,7 @@
       }
     }
 
-    // Smart Regex parsing for Parul University ID Cards
+    // Smart Regex parsing for University ID Cards
     function extractCredentialsFromText(text) {
       if (!text) return;
 
@@ -791,7 +791,7 @@
       setTimeout(() => setStepState(1, 'done', 'Headless Chromium session ready.'), 2000);
 
       setTimeout(() => {
-        setStepState(2, 'active', 'Navigating to https://ums.paruluniversity.ac.in and selecting Student role...');
+        setStepState(2, 'active', 'Navigating to University UMS Portal and selecting Student role...');
       }, 2500);
 
       setTimeout(() => {
