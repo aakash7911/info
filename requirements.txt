@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+selenium
+webdriver_manager
+openpyxl
+python-multipart
+pydantic

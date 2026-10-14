@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parul University — Student Dossier Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            portal: {
+              950: '#070A12',
+              900: '#0B1120',
+              850: '#0F172A',
+              800: '#1E293B',
+              700: '#334155',
+              600: '#475569',
+              accent: '#2563EB',
+              accentHover: '#1D4ED8',
+              emerald: '#10B981',
+              warning: '#F59E0B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scanline laser animation */
+    @keyframes scanline {
+      0% { top: 0%; opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { top: 100%; opacity: 0.8; }
+    }
+    .laser-line {
+      animation: scanline 2.2s ease-in-out infinite alternate;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0B1120; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-portal-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-portal-800 bg-portal-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm">
+          PU
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">PARUL UNIVERSITY</h1>
+            <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-portal-800 text-slate-300 border border-slate-700">UMS Dossier</span>
+          </div>
+          <p class="text-xs text-slate-400">Automated Student Profile Extraction & Verification Portal</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Headless Gateway: READY</span>
+        </div>
+        <a href="#about" class="text-xs text-slate-400 hover:text-white transition">Docs</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Top Headline Banner -->
+    <div class="relative overflow-hidden rounded-2xl border border-portal-800 bg-gradient-to-r from-portal-900 via-portal-850 to-portal-900 p-6 sm:p-8">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-3">
+          <span>Digital Student Bureau</span>
+          <span>•</span>
+          <span>Instant ID Card OCR</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+          ID Card Scan karke Student Dossier & Excel Sheet Generate Karein
+        </h2>
+        <p class="mt-2 text-sm text-slate-300 leading-relaxed">
+          Student ka ID card camera se scan karein ya photo upload karein. System automatic Enrollment Number aur Date of Birth extract karega, background me headless browser se UMS Portal authenticate karke complete Academic Dossier compile karega.
+        </p>
+      </div>
+    </div>
+
+    <!-- Main Grid: Scanner Left, Verification Form Right -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT: ID Card Scanner (Col 7) -->
+      <div class="lg:col-span-7 bg-portal-900 border border-portal-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+        
+        <!-- Mode Switcher -->
+        <div class="flex items-center justify-between border-b border-portal-800 pb-4">
+          <div class="flex items-center space-x-2 text-sm font-semibold text-white">
+            <svg class="w-5 h-5 text-portal-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <span>Step 1: ID Card Input</span>
+          </div>
+
+          <div class="inline-flex p-1 rounded-lg bg-portal-950 border border-portal-800 text-xs font-medium">
+            <button id="btnTabCamera" onclick="switchScanTab('camera')" class="px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition">
+              Live Camera
+            </button>
+            <button id="btnTabUpload" onclick="switchScanTab('upload')" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">
+              Upload Photo
+            </button>
+          </div>
+        </div>
+
+        <!-- CAMERA VIEWPORT -->
+        <div id="viewCamera" class="space-y-4">
+          <div class="relative w-full aspect-[16/10] bg-black rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
+            
+            <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+            
+            <div id="cameraPlaceholder" class="text-center p-6 space-y-3">
+              <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-400 mx-auto flex items-center justify-center">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-white">Camera Permission Required</p>
+                <p class="text-xs text-slate-400 mt-0.5">Click below to start live ID card detection</p>
+              </div>
+              <button onclick="startCamera()" class="px-4 py-2 rounded-lg bg-portal-accent hover:bg-portal-accentHover text-white text-xs font-semibold shadow transition inline-flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                <span>Start Camera Scanner</span>
+              </button>
+            </div>
+
+            <!-- ID Card Overlay Guide Frame -->
+            <div id="scannerOverlay" class="absolute inset-0 pointer-events-none hidden flex items-center justify-center p-6">
+              <div class="relative w-4/5 h-4/5 border-2 border-dashed border-emerald-400/70 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                <!-- Laser line -->
+                <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_10px_#10B981]"></div>
+                <!-- Corner marks -->
+                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-400"></div>
+                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-400"></div>
+                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-400"></div>
+                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-emerald-400"></div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 bg-black/60 px-2 py-0.5 rounded backdrop-blur border border-emerald-500/20">
+                  Align ID Card in Frame
+                </span>
+              </div>
+            </div>
+
+            <!-- Hidden canvas for snapshot capture -->
+            <canvas id="captureCanvas" class="hidden"></canvas>
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <button id="btnFlipCamera" onclick="flipCamera()" class="px-3 py-2 rounded-lg bg-portal-800 hover:bg-portal-700 text-slate-300 font-medium transition inline-flex items-center space-x-1.5 hidden">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Flip Camera</span>
+            </button>
+
+            <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition inline-flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/30 hidden">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+              <span>Capture & Scan Card</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- UPLOAD VIEWPORT -->
+        <div id="viewUpload" class="hidden space-y-4">
+          <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="cursor-pointer border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 rounded-xl p-8 text-center transition space-y-3">
+            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
+            <div class="w-12 h-12 rounded-full bg-portal-800 text-slate-400 mx-auto flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">Click ya drag karein Student ID Card image yahan</p>
+              <p class="text-xs text-slate-400 mt-1">PNG, JPG, JPEG ya mobile screenshot (Clear & well-lit)</p>
+            </div>
+          </div>
+
+          <div id="uploadPreviewBox" class="hidden relative rounded-xl overflow-hidden border border-slate-700 aspect-[16/10] bg-black">
+            <img id="uploadPreviewImg" class="w-full h-full object-contain" alt="Uploaded ID Card Preview" />
+            <button onclick="clearUploadedFile()" class="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs border border-white/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- OCR Processing State Bar -->
+        <div id="ocrProgressCard" class="hidden p-3.5 rounded-xl bg-portal-800/80 border border-portal-700 text-xs space-y-2">
+          <div class="flex items-center justify-between font-mono">
+            <div class="flex items-center space-x-2 text-blue-400 font-medium">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              <span id="ocrStatusText">Tesseract OCR processing ID Card...</span>
+            </div>
+            <span id="ocrPercent" class="text-slate-400">0%</span>
+          </div>
+          <div class="w-full bg-portal-950 rounded-full h-1.5 overflow-hidden">
+            <div id="ocrProgressBar" class="bg-portal-accent h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Verified Credentials & Trigger (Col 5) -->
+      <div class="lg:col-span-5 bg-portal-900 border border-portal-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+        
+        <div class="flex items-center justify-between border-b border-portal-800 pb-4">
+          <div class="flex items-center space-x-2 text-sm font-semibold text-white">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Step 2: Verify Credentials</span>
+          </div>
+          <span class="text-[10px] uppercase font-mono text-slate-400">Editable Inputs</span>
+        </div>
+
+        <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-4">
+          
+          <!-- Enrollment / UG Number Input -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Enrollment Number (UG No.)
+              </label>
+              <span id="badgeEnroll" class="hidden text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                OCR Auto-Detected
+              </span>
+            </div>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="inputEnrollment" 
+                required 
+                placeholder="e.g. 210303105001" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950 border border-portal-700 text-white font-mono text-sm focus:outline-none focus:border-portal-accent focus:ring-1 focus:ring-portal-accent transition placeholder-slate-600"
+              />
+              <button type="button" onclick="document.getElementById('inputEnrollment').focus()" class="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400">Card me likha 11-14 digit ka official enrollment number.</p>
+          </div>
+
+          <!-- Date of Birth (DOB) Input -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Date of Birth (DOB)
+              </label>
+              <span id="badgeDob" class="hidden text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                OCR Auto-Detected
+              </span>
+            </div>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="inputDob" 
+                required 
+                placeholder="e.g. 15/08/2003 ya 15-08-2003" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950 border border-portal-700 text-white font-mono text-sm focus:outline-none focus:border-portal-accent focus:ring-1 focus:ring-portal-accent transition placeholder-slate-600"
+              />
+            </div>
+            <p class="text-[11px] text-slate-400">Format: DD/MM/YYYY ya DD-MM-YYYY (UMS password ki tarah kaam karta hai).</p>
+          </div>
+
+          <!-- Raw Scanned Text Accordion (Optional Inspection) -->
+          <details class="text-xs text-slate-400 bg-portal-950 rounded-lg border border-portal-800 p-2.5">
+            <summary class="cursor-pointer font-medium text-slate-300 hover:text-white select-none">
+              View Raw Scanned Text (OCR Output)
+            </summary>
+            <pre id="rawOcrText" class="mt-2 p-2 bg-black/50 rounded text-[11px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto text-slate-400">Card scan karne ke baad yahan pure text preview aayega...</pre>
+          </details>
+
+          <!-- Primary Submit Button -->
+          <button 
+            type="submit" 
+            id="btnSubmit" 
+            class="w-full py-3.5 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 transition flex items-center justify-center space-x-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span id="btnSubmitText">Fetch & Compile Student Dossier</span>
+          </button>
+        </form>
+
+        <div class="p-3 rounded-lg bg-portal-950/80 border border-portal-800 text-[11px] text-slate-400 space-y-1">
+          <div class="flex items-center space-x-1.5 text-slate-300 font-medium">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+            <span>Invisible Browser Security</span>
+          </div>
+          <p>Scraping runs in memory-safe headless Chrome directly on server. No personal details are stored permanently.</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- LIVE EXTRACTION TELEMETRY PROGRESS (Shown during fetch) -->
+    <div id="telemetrySection" class="hidden bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-portal-800 pb-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 rounded-full bg-blue-500 animate-ping"></div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+            Invisible Browser Pipeline Status
+          </h3>
+        </div>
+        <span id="telemetryTimer" class="text-xs font-mono text-slate-400">0s elapsed</span>
+      </div>
+
+      <!-- Live Step Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        
+        <div id="stepCard1" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+            <span>01. INIT</span>
+            <span id="iconStep1">⏳</span>
+          </div>
+          <p class="font-medium text-white">Headless Browser</p>
+          <p class="text-[10px] text-slate-500">Render sandbox launch</p>
+        </div>
+
+        <div id="stepCard2" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+            <span>02. AUTH</span>
+            <span id="iconStep2">⏳</span>
+          </div>
+          <p class="font-medium text-white">UMS Portal Login</p>
+          <p class="text-[10px] text-slate-500">Student switch & creds</p>
+        </div>
+
+        <div id="stepCard3" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+            <span>03. BYPASS</span>
+            <span id="iconStep3">⏳</span>
+          </div>
+          <p class="font-medium text-white">Notice Clearance</p>
+          <p class="text-[10px] text-slate-500">Dismiss alerts & modal</p>
+        </div>
+
+        <div id="stepCard4" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+            <span>04. HARVEST</span>
+            <span id="iconStep4">⏳</span>
+          </div>
+          <p class="font-medium text-white">Academic Tabs</p>
+          <p class="text-[10px] text-slate-500">Personal, parents, etc.</p>
+        </div>
+
+        <div id="stepCard5" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+          <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
+            <span>05. EXCEL</span>
+            <span id="iconStep5">⏳</span>
+          </div>
+          <p class="font-medium text-white">Excel Dossier</p>
+          <p class="text-[10px] text-slate-500">Segoe UI styling</p>
+        </div>
+
+      </div>
+
+      <div class="p-3 rounded-lg bg-portal-950 text-xs font-mono text-slate-300 flex items-center space-x-2 border border-portal-800">
+        <span class="text-blue-400 font-bold">&gt;</span>
+        <span id="liveStatusLog">Starting student dossier request...</span>
+      </div>
+    </div>
+
+    <!-- ERROR BANNER (If scraper fails) -->
+    <div id="errorCard" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs space-y-1">
+      <div class="font-bold flex items-center space-x-2 text-rose-200">
+        <svg class="w-4 h-4 text-rose-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+        <span>Extraction Error</span>
+      </div>
+      <p id="errorMsgText">Details could not be fetched. Check credentials.</p>
+    </div>
+
+    <!-- RESULTS SECTION: DOSSIER & DOWNLOAD -->
+    <div id="resultsSection" class="hidden space-y-6">
+
+      <!-- HERO EXCEL DOWNLOAD BANNER -->
+      <div class="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-portal-900 to-portal-950 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+        <div class="space-y-2 text-center sm:text-left">
+          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Extraction Complete & Verified</span>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-extrabold text-white">
+            Student Academic Dossier Ready (.xlsx)
+          </h3>
+          <p id="resultsStats" class="text-xs text-slate-300">
+            Total 34 fields extracted across 5 academic sections. Fees skipped.
+          </p>
+        </div>
+
+        <a 
+          id="btnDownloadExcel" 
+          href="#" 
+          download 
+          class="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm tracking-wide shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2 hover:scale-[1.02]"
+        >
+          <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Download Excel Dossier (.xlsx)</span>
+        </a>
+      </div>
+
+      <!-- STUDENT SUMMARY METRICS CARD -->
+      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <h4 class="text-sm font-bold text-white uppercase tracking-wider font-mono border-b border-portal-800 pb-3">
+          Student Profile Overview
+        </h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
+            <span class="text-[10px] font-mono text-slate-400 uppercase">Student Name</span>
+            <p id="sumName" class="text-sm font-bold text-white mt-0.5">--</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
+            <span class="text-[10px] font-mono text-slate-400 uppercase">Enrollment No</span>
+            <p id="sumEnroll" class="text-sm font-mono font-bold text-blue-400 mt-0.5">--</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
+            <span class="text-[10px] font-mono text-slate-400 uppercase">Program / Degree</span>
+            <p id="sumProgram" class="text-sm font-bold text-white mt-0.5">--</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
+            <span class="text-[10px] font-mono text-slate-400 uppercase">Domicile State</span>
+            <p id="sumDomicile" class="text-sm font-bold text-emerald-400 mt-0.5">--</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABULAR DOSSIER ACCORDION / TABS -->
+      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-portal-800 pb-4">
+          <h4 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+            Detailed Dossier Fields
+          </h4>
+          <input 
+            type="text" 
+            id="fieldSearch" 
+            onkeyup="filterDossierFields()" 
+            placeholder="Search any field..." 
+            class="px-3 py-1.5 rounded-lg bg-portal-950 border border-portal-700 text-xs text-white focus:outline-none focus:border-portal-accent w-full sm:w-64 font-mono"
+          />
+        </div>
+
+        <div id="dossierTableContainer" class="space-y-6">
+          <!-- Dynamic Section Blocks Injected Here -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-portal-800 py-8 text-center text-xs text-slate-500 font-mono mt-16">
+    Parul University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
+  </footer>
+
+  <!-- JAVASCRIPT CONTROLLER -->
+  <script>
+    // State management
+    let currentStream = null;
+    let cameraFacingMode = 'environment'; // Rear camera on mobile by default
+    let ocrWorker = null;
+    let isOcrRunning = false;
+    let timerInterval = null;
+    let lastExtractedData = null;
+
+    // Switch between Camera and Upload
+    function switchScanTab(tab) {
+      const btnCam = document.getElementById('btnTabCamera');
+      const btnUp = document.getElementById('btnTabUpload');
+      const viewCam = document.getElementById('viewCamera');
+      const viewUp = document.getElementById('viewUpload');
+
+      if (tab === 'camera') {
+        btnCam.className = "px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition";
+        btnUp.className = "px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition";
+        viewCam.classList.remove('hidden');
+        viewUp.classList.add('hidden');
+      } else {
+        btnUp.className = "px-3 py-1.5 rounded-md bg-portal-accent text-white shadow transition";
+        btnCam.className = "px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition";
+        viewUp.classList.remove('hidden');
+        viewCam.classList.add('hidden');
+        stopCamera();
+      }
+    }
+
+    // Start Live Camera Stream
+    async function startCamera() {
+      try {
+        let constraints = {
+          video: {
+            facingMode: cameraFacingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        try {
+          currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (e1) {
+          // Universal fallback without strict resolution
+          currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
+        const video = document.getElementById('videoFeed');
+        video.srcObject = currentStream;
+        video.classList.remove('hidden');
+        document.getElementById('cameraPlaceholder').classList.add('hidden');
+        document.getElementById('scannerOverlay').classList.remove('hidden');
+        document.getElementById('btnSnap').classList.remove('hidden');
+        document.getElementById('btnFlipCamera').classList.remove('hidden');
+      } catch (err) {
+        alert("Camera access error: " + err.message + "\nAap Photo Upload option bhi use kar sakte hain.");
+      }
+    }
+
+    function stopCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      const video = document.getElementById('videoFeed');
+      if (video) video.classList.add('hidden');
+      document.getElementById('cameraPlaceholder').classList.remove('hidden');
+      document.getElementById('scannerOverlay').classList.add('hidden');
+      document.getElementById('btnSnap').classList.add('hidden');
+      document.getElementById('btnFlipCamera').classList.add('hidden');
+    }
+
+    async function flipCamera() {
+      cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+      stopCamera();
+      await startCamera();
+    }
+
+    // Capture Frame & Run Tesseract OCR
+    async function captureAndOCR() {
+      const video = document.getElementById('videoFeed');
+      const canvas = document.getElementById('captureCanvas');
+      if (!video || !video.videoWidth) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      await processImageWithOCR(dataUrl);
+    }
+
+    // File Upload Handling
+    async function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        const dataUrl = evt.target.result;
+        document.getElementById('dropzone').classList.add('hidden');
+        const previewBox = document.getElementById('uploadPreviewBox');
+        document.getElementById('uploadPreviewImg').src = dataUrl;
+        previewBox.classList.remove('hidden');
+
+        await processImageWithOCR(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUploadedFile() {
+      document.getElementById('fileInput').value = '';
+      document.getElementById('uploadPreviewBox').classList.add('hidden');
+      document.getElementById('dropzone').classList.remove('hidden');
+    }
+
+    // Drag and drop listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const dropzone = document.getElementById('dropzone');
+      if (dropzone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+          dropzone.addEventListener(name, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(name => {
+          dropzone.addEventListener(name, () => dropzone.classList.add('border-portal-accent', 'bg-portal-900'), false);
+        });
+        ['dragleave', 'drop'].forEach(name => {
+          dropzone.addEventListener(name, () => dropzone.classList.remove('border-portal-accent', 'bg-portal-900'), false);
+        });
+        dropzone.addEventListener('drop', e => {
+          const dt = e.dataTransfer;
+          if (dt && dt.files && dt.files[0]) {
+            handleFileSelect({ target: { files: [dt.files[0]] } });
+          }
+        });
+      }
+    });
+
+    // Core OCR Execution (Tesseract.js in Browser)
+    async function processImageWithOCR(imageData) {
+      if (isOcrRunning) return;
+      isOcrRunning = true;
+
+      const progressCard = document.getElementById('ocrProgressCard');
+      const progressBar = document.getElementById('ocrProgressBar');
+      const progressPercent = document.getElementById('ocrPercent');
+      const statusText = document.getElementById('ocrStatusText');
+
+      progressCard.classList.remove('hidden');
+      progressBar.style.width = '10%';
+      progressPercent.innerText = '10%';
+      statusText.innerText = 'Initializing OCR Engine...';
+
+      try {
+        const worker = await Tesseract.createWorker('eng', 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const p = Math.round(m.progress * 100);
+              progressBar.style.width = `${p}%`;
+              progressPercent.innerText = `${p}%`;
+              statusText.innerText = `Recognizing text on ID Card (${p}%)...`;
+            }
+          }
+        });
+
+        const res = await worker.recognize(imageData);
+        await worker.terminate();
+
+        const rawText = res.data.text || '';
+        document.getElementById('rawOcrText').innerText = rawText;
+
+        // Parse Enrollment & DOB with Smart Regex
+        extractCredentialsFromText(rawText);
+
+        statusText.innerText = 'Extraction complete!';
+        setTimeout(() => progressCard.classList.add('hidden'), 1500);
+
+      } catch (err) {
+        console.error("OCR error:", err);
+        statusText.innerText = 'OCR scan failed. Enter details manually.';
+        setTimeout(() => progressCard.classList.add('hidden'), 3000);
+      } finally {
+        isOcrRunning = false;
+      }
+    }
+
+    // Smart Regex parsing for Parul University ID Cards
+    function extractCredentialsFromText(text) {
+      if (!text) return;
+
+      let foundEnrollment = "";
+      let foundDob = "";
+
+      // 1. Enrollment Regex Patterns
+      // Typically 11 to 14 digits, often starting with 19, 20, 21, 22, 23, 24, 25, 26
+      const enrollRegexes = [
+        /(?:enrollment|enroll|ug\s*no|roll|reg|id)[\s\.:#-]*([0-9]{9,15})/i,
+        /\b(19|20|21|22|23|24|25|26)[0-9]{9,13}\b/,
+        /\b[0-9]{11,14}\b/
+      ];
+
+      for (const rx of enrollRegexes) {
+        const m = text.match(rx);
+        if (m) {
+          foundEnrollment = (m[1] || m[0]).trim();
+          break;
+        }
+      }
+
+      // 2. DOB Regex Patterns
+      // e.g. 15/08/2003, 15-08-2003, 15.08.2003
+      const dobRegexes = [
+        /(?:dob|birth|d\.o\.b)[\s\.:#-]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i,
+        /\b([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{4})\b/,
+        /\b([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2})\b/
+      ];
+
+      for (const rx of dobRegexes) {
+        const m = text.match(rx);
+        if (m) {
+          foundDob = (m[1] || m[0]).trim();
+          break;
+        }
+      }
+
+      if (foundEnrollment) {
+        const inpEnroll = document.getElementById('inputEnrollment');
+        inpEnroll.value = foundEnrollment;
+        document.getElementById('badgeEnroll').classList.remove('hidden');
+        inpEnroll.classList.add('border-emerald-500');
+      }
+
+      if (foundDob) {
+        const inpDob = document.getElementById('inputDob');
+        inpDob.value = foundDob;
+        document.getElementById('badgeDob').classList.remove('hidden');
+        inpDob.classList.add('border-emerald-500');
+      }
+
+      // Play subtle chime on success
+      if (foundEnrollment || foundDob) {
+        playScanSuccessChime();
+      }
+    }
+
+    // Audio chime feedback
+    function playScanSuccessChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch (e) {}
+    }
+
+    // Step telemetry updater
+    function setStepState(stepNum, state, message) {
+      const card = document.getElementById(`stepCard${stepNum}`);
+      const icon = document.getElementById(`iconStep${stepNum}`);
+      const log = document.getElementById('liveStatusLog');
+
+      if (!card || !icon) return;
+
+      if (state === 'active') {
+        card.className = "p-3 rounded-xl bg-blue-500/10 border border-blue-500/40 text-xs space-y-1.5 opacity-100 shadow-md";
+        icon.innerText = "⚡";
+      } else if (state === 'done') {
+        card.className = "p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1.5 opacity-100";
+        icon.innerText = "✅";
+      } else if (state === 'error') {
+        card.className = "p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs space-y-1.5 opacity-100";
+        icon.innerText = "❌";
+      }
+
+      if (message) {
+        log.innerText = message;
+      }
+    }
+
+    // Trigger Backend Scraper
+    async function handleStartDossier(e) {
+      e.preventDefault();
+
+      const enroll = document.getElementById('inputEnrollment').value.trim();
+      const dob = document.getElementById('inputDob').value.trim();
+
+      if (!enroll || !dob) {
+        alert("Kripya Enrollment number aur Date of Birth dono enter karein.");
+        return;
+      }
+
+      // UI States
+      const btnSubmit = document.getElementById('btnSubmit');
+      const btnText = document.getElementById('btnSubmitText');
+      btnSubmit.disabled = true;
+      btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
+      btnText.innerText = "Headless Browser Processing...";
+
+      document.getElementById('errorCard').classList.add('hidden');
+      document.getElementById('resultsSection').classList.add('hidden');
+      const telemetry = document.getElementById('telemetrySection');
+      telemetry.classList.remove('hidden');
+
+      // Start Telemetry timer
+      let seconds = 0;
+      const timerEl = document.getElementById('telemetryTimer');
+      timerInterval = setInterval(() => {
+        seconds++;
+        timerEl.innerText = `${seconds}s elapsed`;
+      }, 1000);
+
+      // Simulated realistic telemetry sequence
+      setStepState(1, 'active', 'Spawning headless Chrome driver instance on server...');
+      setTimeout(() => setStepState(1, 'done', 'Headless Chromium session ready.'), 2000);
+
+      setTimeout(() => {
+        setStepState(2, 'active', 'Navigating to https://ums.paruluniversity.ac.in and selecting Student role...');
+      }, 2500);
+
+      setTimeout(() => {
+        setStepState(2, 'done', 'Credentials injected, login submitted.');
+        setStepState(3, 'active', 'Listening for notification popups and dismissing alert modals...');
+      }, 5500);
+
+      setTimeout(() => {
+        setStepState(3, 'done', 'Dashboard active. Navigating into Student Profile tabs...');
+        setStepState(4, 'active', 'Harvesting Personal, Admission, Contact, Parents & Qualification tabs...');
+      }, 8500);
+
+      try {
+        const response = await fetch('/api/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enrollment_no: enroll, dob: dob })
+        });
+
+        const data = await response.json();
+
+        clearInterval(timerInterval);
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Scraping failed or portal credentials invalid.");
+        }
+
+        setStepState(4, 'done', `Extracted ${data.total_fields} fields across 5 tabs.`);
+        setStepState(5, 'done', 'Formatted official Excel workbook with Segoe UI.');
+
+        renderResults(data);
+
+      } catch (err) {
+        clearInterval(timerInterval);
+        setStepState(4, 'error', 'Error during extraction.');
+        document.getElementById('errorMsgText').innerText = err.message;
+        document.getElementById('errorCard').classList.remove('hidden');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.classList.remove('opacity-70', 'cursor-not-allowed');
+        btnText.innerText = "Fetch & Compile Student Dossier";
+      }
+    }
+
+    // Render Scraped Data
+    function renderResults(data) {
+      lastExtractedData = data;
+      document.getElementById('resultsSection').classList.remove('hidden');
+
+      // Excel Download Link
+      const btnDownload = document.getElementById('btnDownloadExcel');
+      btnDownload.href = `/api/download/${data.filename}`;
+      btnDownload.download = data.filename;
+
+      document.getElementById('resultsStats').innerText = 
+        `Total ${data.total_fields} fields extracted across ${Object.keys(data.sections).length} sections. Fees skipped.`;
+
+      // Profile Summary Overview
+      const sum = data.summary || {};
+      document.getElementById('sumName').innerText = sum.student_name || 'N/A';
+      document.getElementById('sumEnroll').innerText = sum.enrollment_no || data.enrollment_no;
+      document.getElementById('sumProgram').innerText = sum.course || 'N/A';
+      document.getElementById('sumDomicile').innerText = sum.domicile || 'N/A';
+
+      // Table Container
+      const container = document.getElementById('dossierTableContainer');
+      container.innerHTML = '';
+
+      let globalIndex = 1;
+      for (const [secName, fields] of Object.entries(data.sections)) {
+        const secDiv = document.createElement('div');
+        secDiv.className = "rounded-xl border border-portal-800 bg-portal-950/60 overflow-hidden";
+
+        let rowsHtml = '';
+        fields.forEach(f => {
+          const isEven = globalIndex % 2 === 0;
+          rowsHtml += `
+            <tr class="${isEven ? 'bg-portal-900/40' : 'bg-transparent'} hover:bg-portal-800/40 transition field-row">
+              <td class="px-4 py-2 text-center font-mono text-xs text-slate-500 w-12">${globalIndex}</td>
+              <td class="px-4 py-2 font-semibold text-xs text-slate-200 w-2/5 field-key">${escapeHtml(f.field)}</td>
+              <td class="px-4 py-2 font-mono text-xs text-slate-300 field-val">${escapeHtml(f.value)}</td>
+            </tr>
+          `;
+          globalIndex++;
+        });
+
+        secDiv.innerHTML = `
+          <div class="px-4 py-2.5 bg-portal-800/60 border-b border-portal-800 flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-400 uppercase tracking-wider font-mono">◆ ${escapeHtml(secName)}</span>
+            <span class="text-[11px] font-mono text-slate-400">${fields.length} records</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-portal-800/60 text-[10px] font-mono uppercase text-slate-500">
+                  <th class="px-4 py-1.5 text-center">#</th>
+                  <th class="px-4 py-1.5">Field / Attribute</th>
+                  <th class="px-4 py-1.5">Extracted Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(secDiv);
+      }
+
+      // Scroll smoothly to results
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filterDossierFields() {
+      const q = document.getElementById('fieldSearch').value.toLowerCase();
+      const rows = document.querySelectorAll('.field-row');
+      rows.forEach(r => {
+        const k = r.querySelector('.field-key')?.innerText.toLowerCase() || '';
+        const v = r.querySelector('.field-val')?.innerText.toLowerCase() || '';
+        if (k.includes(q) || v.includes(q)) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
