@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>University — Student Dossier Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +36,16 @@
     }
   </script>
   <style>
+    /* Mobile touch ergonomics & native viewport */
+    button, input, select {
+      touch-action: manipulation;
+    }
+    body {
+      padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+    }
+    header {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
     /* Custom scanline laser animation */
     @keyframes scanline {
       0% { top: 0%; opacity: 0.8; }
@@ -58,56 +68,56 @@
   <header class="border-b border-portal-800 bg-portal-900/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm">
+        <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm shrink-0">
           UNI
         </div>
-        <div>
+        <div class="min-w-0">
           <div class="flex items-center space-x-2">
             <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">UNIVERSITY</h1>
             <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-portal-800 text-slate-300 border border-slate-700">UMS Dossier</span>
           </div>
-          <p class="text-xs text-slate-400">Automated Student Profile Extraction & Verification Portal</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 truncate">Automated Student Profile Extraction & Verification Portal</p>
         </div>
       </div>
       
-      <div class="flex items-center space-x-4">
-        <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+      <div class="flex items-center space-x-3">
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Headless Gateway: READY</span>
+          <span>Gateway: READY</span>
         </div>
-        <a href="#about" class="text-xs text-slate-400 hover:text-white transition">Docs</a>
+        <a href="#extractForm" class="text-xs text-slate-400 hover:text-white transition px-2 py-1 rounded bg-portal-800/60 border border-portal-700 sm:border-0 sm:bg-transparent">Scan ID</a>
       </div>
     </div>
   </header>
 
   <!-- Main Content Area -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
 
     <!-- Top Headline Banner -->
-    <div class="relative overflow-hidden rounded-2xl border border-portal-800 bg-gradient-to-r from-portal-900 via-portal-850 to-portal-900 p-6 sm:p-8">
-      <div class="max-w-3xl">
-        <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-3">
+    <div class="relative overflow-hidden rounded-2xl border border-portal-800 bg-gradient-to-r from-portal-900 via-portal-850 to-portal-900 p-4 sm:p-7">
+      <div class="max-w-3xl space-y-2">
+        <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
           <span>Digital Student Bureau</span>
           <span>•</span>
           <span>Instant ID Card OCR</span>
         </div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-          ID Card Scan karke Student Dossier & Excel Sheet Generate Karein
+        <h2 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+          Scan Student ID Card to Generate Official Academic Dossier (.xlsx)
         </h2>
-        <p class="mt-2 text-sm text-slate-300 leading-relaxed">
-          Student ka ID card camera se scan karein ya photo upload karein. System automatic Enrollment Number aur Date of Birth extract karega, background me headless browser se UMS Portal authenticate karke complete Academic Dossier compile karega.
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Scan the student ID card using your mobile camera or upload an image. The system automatically extracts the Enrollment Number and Date of Birth, connects to the University UMS Portal, and compiles a comprehensive verified Academic Dossier.
         </p>
       </div>
     </div>
 
     <!-- Main Grid: Scanner Left, Verification Form Right -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
 
       <!-- LEFT: ID Card Scanner (Col 7) -->
-      <div class="lg:col-span-7 bg-portal-900 border border-portal-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+      <div class="lg:col-span-7 bg-portal-900 border border-portal-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         
         <!-- Mode Switcher -->
-        <div class="flex items-center justify-between border-b border-portal-800 pb-4">
+        <div class="flex items-center justify-between border-b border-portal-800 pb-3 sm:pb-4">
           <div class="flex items-center space-x-2 text-sm font-semibold text-white">
             <svg class="w-5 h-5 text-portal-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             <span>Step 1: ID Card Input</span>
@@ -124,37 +134,37 @@
         </div>
 
         <!-- CAMERA VIEWPORT -->
-        <div id="viewCamera" class="space-y-4">
-          <div class="relative w-full aspect-[16/10] bg-black rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
+        <div id="viewCamera" class="space-y-3 sm:space-y-4">
+          <div class="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-black rounded-2xl overflow-hidden border border-slate-700 flex items-center justify-center shadow-inner">
             
             <video id="videoFeed" autoplay playsinline class="w-full h-full object-cover hidden"></video>
             
             <div id="cameraPlaceholder" class="text-center p-6 space-y-3">
               <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-400 mx-auto flex items-center justify-center">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </div>
               <div>
-                <p class="text-sm font-medium text-white">Camera Permission Required</p>
-                <p class="text-xs text-slate-400 mt-0.5">Click below to start live ID card detection</p>
+                <p class="text-sm font-semibold text-white">Camera Access Required</p>
+                <p class="text-xs text-slate-400 mt-0.5">Tap below to start mobile ID card scanner</p>
               </div>
-              <button onclick="startCamera()" class="px-4 py-2 rounded-lg bg-portal-accent hover:bg-portal-accentHover text-white text-xs font-semibold shadow transition inline-flex items-center space-x-2">
+              <button onclick="startCamera()" class="px-5 py-3 rounded-xl bg-portal-accent hover:bg-portal-accentHover active:scale-95 text-white text-xs font-bold shadow-lg transition inline-flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                <span>Start Camera Scanner</span>
+                <span>Launch Camera Scanner</span>
               </button>
             </div>
 
             <!-- ID Card Overlay Guide Frame -->
-            <div id="scannerOverlay" class="absolute inset-0 pointer-events-none hidden flex items-center justify-center p-6">
-              <div class="relative w-4/5 h-4/5 border-2 border-dashed border-emerald-400/70 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+            <div id="scannerOverlay" class="absolute inset-0 pointer-events-none hidden flex items-center justify-center p-4 sm:p-6">
+              <div class="relative w-[90%] sm:w-4/5 h-[85%] sm:h-4/5 border-2 border-dashed border-emerald-400/80 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.25)]">
                 <!-- Laser line -->
-                <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_10px_#10B981]"></div>
+                <div class="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent laser-line shadow-[0_0_12px_#10B981]"></div>
                 <!-- Corner marks -->
-                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-400"></div>
-                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-400"></div>
-                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-400"></div>
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-emerald-400"></div>
-                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 bg-black/60 px-2 py-0.5 rounded backdrop-blur border border-emerald-500/20">
-                  Align ID Card in Frame
+                <div class="absolute -top-1 -left-1 w-5 h-5 border-t-2 border-l-2 border-emerald-400"></div>
+                <div class="absolute -top-1 -right-1 w-5 h-5 border-t-2 border-r-2 border-emerald-400"></div>
+                <div class="absolute -bottom-1 -left-1 w-5 h-5 border-b-2 border-l-2 border-emerald-400"></div>
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 border-b-2 border-r-2 border-emerald-400"></div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-300 bg-black/75 px-2.5 py-1 rounded-md backdrop-blur border border-emerald-500/30">
+                  Align ID Card Inside Frame
                 </span>
               </div>
             </div>
@@ -163,13 +173,13 @@
             <canvas id="captureCanvas" class="hidden"></canvas>
           </div>
 
-          <div class="flex items-center justify-between text-xs">
-            <button id="btnFlipCamera" onclick="flipCamera()" class="px-3 py-2 rounded-lg bg-portal-800 hover:bg-portal-700 text-slate-300 font-medium transition inline-flex items-center space-x-1.5 hidden">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs">
+            <button id="btnFlipCamera" onclick="flipCamera()" class="w-full sm:w-auto px-4 py-3 rounded-xl bg-portal-800 active:bg-portal-700 text-slate-200 font-medium transition inline-flex items-center justify-center space-x-2 hidden border border-portal-700">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>Flip Camera</span>
+              <span>Switch Camera (Front / Back)</span>
             </button>
 
-            <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition inline-flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/30 hidden">
+            <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 hidden">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
               <span>Capture & Scan Card</span>
             </button>
@@ -178,20 +188,20 @@
 
         <!-- UPLOAD VIEWPORT -->
         <div id="viewUpload" class="hidden space-y-4">
-          <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="cursor-pointer border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 rounded-xl p-8 text-center transition space-y-3">
+          <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="cursor-pointer border-2 border-dashed border-portal-700 hover:border-portal-accent/60 bg-portal-950/60 hover:bg-portal-950/90 active:bg-portal-900 rounded-2xl p-6 sm:p-8 text-center transition space-y-3">
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
-            <div class="w-12 h-12 rounded-full bg-portal-800 text-slate-400 mx-auto flex items-center justify-center">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div class="w-14 h-14 rounded-full bg-portal-800 text-slate-300 mx-auto flex items-center justify-center">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
             <div>
-              <p class="text-sm font-semibold text-white">Click ya drag karein Student ID Card image yahan</p>
-              <p class="text-xs text-slate-400 mt-1">PNG, JPG, JPEG ya mobile screenshot (Clear & well-lit)</p>
+              <p class="text-sm font-semibold text-white">Tap to upload or take ID card photo</p>
+              <p class="text-xs text-slate-400 mt-1">PNG, JPG, JPEG or camera photo (Clear & well-lit)</p>
             </div>
           </div>
 
-          <div id="uploadPreviewBox" class="hidden relative rounded-xl overflow-hidden border border-slate-700 aspect-[16/10] bg-black">
+          <div id="uploadPreviewBox" class="hidden relative rounded-2xl overflow-hidden border border-slate-700 aspect-[4/3] sm:aspect-[16/10] bg-black">
             <img id="uploadPreviewImg" class="w-full h-full object-contain" alt="Uploaded ID Card Preview" />
-            <button onclick="clearUploadedFile()" class="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs border border-white/20">
+            <button onclick="clearUploadedFile()" class="absolute top-2 right-2 p-2 rounded-full bg-black/75 hover:bg-black text-white text-xs border border-white/20 active:scale-95">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -243,10 +253,10 @@
                 required 
                 readonly
                 placeholder="Scan / Upload ID card to populate" 
-                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600"
+                class="w-full px-3.5 py-3 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-base sm:text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600 shadow-inner"
               />
             </div>
-            <p class="text-[11px] text-slate-400">Card scan ya upload karne par automatic yahan aayega.</p>
+            <p class="text-[11px] text-slate-400">Auto-populated upon scanning or uploading ID card.</p>
           </div>
 
           <!-- Date of Birth (DOB) Input -->
@@ -267,10 +277,10 @@
                 readonly
                 maxlength="8"
                 placeholder="Scan / Upload ID card to populate" 
-                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600"
+                class="w-full px-3.5 py-3 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-base sm:text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600 shadow-inner"
               />
             </div>
-            <p class="text-[11px] text-slate-400">Card scan ya upload karne par automatic yahan aayega.</p>
+            <p class="text-[11px] text-slate-400">Auto-populated upon scanning or uploading ID card.</p>
           </div>
 
           <!-- Hidden OCR text buffer for JS -->
@@ -283,7 +293,7 @@
               <span id="scanAlertTitle">Card Scan Incomplete</span>
             </div>
             <p id="scanAlertMessage" class="text-slate-300 leading-relaxed text-[11px]">
-              Details missing. Kripya card ko dobara scan karein.
+              Credentials missing. Please re-scan or upload a clear card image.
             </p>
           </div>
 
@@ -325,7 +335,7 @@
       </div>
 
       <!-- Live Step Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
         
         <div id="stepCard1" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
@@ -363,7 +373,7 @@
           <p class="text-[10px] text-slate-500">Personal, parents, etc.</p>
         </div>
 
-        <div id="stepCard5" class="p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
+        <div id="stepCard5" class="col-span-2 sm:col-span-1 p-3 rounded-xl bg-portal-950 border border-portal-800 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-400">
             <span>05. EXCEL</span>
             <span id="iconStep5">⏳</span>
@@ -393,7 +403,7 @@
     <div id="resultsSection" class="hidden space-y-6">
 
       <!-- HERO EXCEL DOWNLOAD BANNER -->
-      <div class="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-portal-900 to-portal-950 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+      <div class="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-portal-900 to-portal-950 p-4 sm:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6 shadow-2xl">
         <div class="space-y-2 text-center sm:text-left">
           <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono border border-emerald-500/30">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -411,7 +421,7 @@
           id="btnDownloadExcel" 
           href="#" 
           download 
-          class="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm tracking-wide shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2 hover:scale-[1.02]"
+          class="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-extrabold text-sm tracking-wide shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-95"
         >
           <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           <span>Download Excel Dossier (.xlsx)</span>
@@ -419,12 +429,12 @@
       </div>
 
       <!-- STUDENT SUMMARY METRICS CARD -->
-      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-6 shadow-xl space-y-5">
+      <div class="bg-portal-900 border border-portal-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         <h4 class="text-sm font-bold text-white uppercase tracking-wider font-mono border-b border-portal-800 pb-3">
           Student Profile Overview
         </h4>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           <div class="p-3.5 rounded-xl bg-portal-950 border border-portal-800">
             <span class="text-[10px] font-mono text-slate-400 uppercase">Student Name</span>
             <p id="sumName" class="text-sm font-bold text-white mt-0.5">--</p>
@@ -529,7 +539,7 @@
         document.getElementById('btnSnap').classList.remove('hidden');
         document.getElementById('btnFlipCamera').classList.remove('hidden');
       } catch (err) {
-        alert("Camera access error: " + err.message + "\nAap Photo Upload option bhi use kar sakte hain.");
+        alert("Camera access error: " + err.message + "\nYou can also use the Upload Photo option.");
       }
     }
 
@@ -700,22 +710,30 @@
         const isBothComplete = updateCredentialState(foundEnrollment, foundDob);
 
         if (isBothComplete) {
-          statusText.innerText = `Success! Detected: ${foundEnrollment} | ${foundDob}`;
+          statusText.innerText = `Verified: ${foundEnrollment} | ${foundDob}`;
           progressBar.className = 'bg-emerald-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = '100%';
           setTimeout(() => progressCard.classList.add('hidden'), 2500);
         } else {
-          statusText.innerText = '⚠️ Scan adhoora hai: Kripya card ko dobara scan karein!';
+          statusText.innerText = '⚠️ Scan Incomplete: Please re-scan ID card!';
           progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = 'Incomplete';
           setTimeout(() => progressCard.classList.add('hidden'), 4000);
         }
 
+        // Guide mobile user smoothly to verification section
+        setTimeout(() => {
+          const target = isBothComplete ? document.getElementById('btnSubmit') : document.getElementById('scanStatusAlert');
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 300);
+
       } catch (err) {
         console.error("OCR error:", err);
-        statusText.innerText = 'OCR scan error. Kripya clear image ke sath dobara scan karein.';
+        statusText.innerText = 'OCR scan error. Please re-scan with a clearer image.';
         progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
         updateCredentialState("", "");
         setTimeout(() => progressCard.classList.add('hidden'), 3500);
@@ -765,7 +783,7 @@
       if (currentEnroll && currentDob) {
         // BOTH FOUND -> UNLOCK & PROCEED
         btnSubmit.disabled = false;
-        btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 cursor-pointer transition flex items-center justify-center space-x-2";
+        btnSubmit.className = "w-full py-4 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover active:scale-95 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 cursor-pointer transition flex items-center justify-center space-x-2";
         if (iconLock) iconLock.classList.add('hidden');
         if (iconLightning) iconLightning.classList.remove('hidden');
         btnText.innerText = "Fetch & Compile Student Dossier";
@@ -776,17 +794,17 @@
         alertTitle.className = "text-emerald-300 font-bold";
         alertTitle.innerText = "Card Scan Successful!";
         alertMsg.className = "text-emerald-200/90 text-[11px] leading-relaxed";
-        alertMsg.innerText = `Enrollment Number (${currentEnroll}) aur Date of Birth (${currentDob}) dono verify ho gaye hain. Ab aap aage badh sakte hain!`;
+        alertMsg.innerText = `Enrollment Number (${currentEnroll}) and Date of Birth (${currentDob}) verified successfully. You may now compile the dossier!`;
 
         playScanSuccessChime();
         return true;
       } else {
         // EITHER OR BOTH MISSING -> LOCK & WARN TO RESCAN
         btnSubmit.disabled = true;
-        btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none";
+        btnSubmit.className = "w-full py-4 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none";
         if (iconLock) iconLock.classList.remove('hidden');
         if (iconLightning) iconLightning.classList.add('hidden');
-        btnText.innerText = "🔒 Scan Incomplete — Kripya Dobara Scan Karein";
+        btnText.innerText = "🔒 Scan Incomplete — Please Re-Scan";
 
         alertBox.className = "p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs space-y-1";
         alertBox.classList.remove('hidden');
@@ -794,25 +812,25 @@
         alertTitle.className = "text-rose-300 font-bold";
 
         if (!currentEnroll && !currentDob) {
-          alertTitle.innerText = "Card Details Miss Ho Gayi Hain — Dobara Scan Karein!";
+          alertTitle.innerText = "Card Details Missing — Please Re-Scan!";
           alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
-          alertMsg.innerText = "Scanner ko na to Enrollment (UG/PG) number mila aur na hi Date of Birth (DOB). Kripya card ko camera ke seedha samne layein aur dobara scan karein ya saaf photo upload karein.";
+          alertMsg.innerText = "The scanner could not detect Enrollment Number or Date of Birth. Please hold the card flat and directly in front of the camera, or upload a sharp image.";
 
           inpEnroll.classList.add('border-rose-500/60', 'bg-rose-500/5');
           inpDob.classList.add('border-rose-500/60', 'bg-rose-500/5');
         } else if (!currentEnroll) {
-          alertTitle.innerText = "Enrollment Number Detect Nahi Hua — Dobara Scan Karein!";
+          alertTitle.innerText = "Enrollment Number Not Detected — Please Re-Scan!";
           alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
-          alertMsg.innerText = "Date of Birth verify ho gayi hai, lekin Enrollment (UG/PG) number detect nahi hua. Barcode ke niche wala number focus mein rakh kar dobara scan karein.";
+          alertMsg.innerText = "Date of Birth detected, but Enrollment (UG/PG) number could not be read. Please focus on the number under the barcode or top header and re-scan.";
 
           inpEnroll.classList.add('border-rose-500/60', 'bg-rose-500/5');
           badgeEnroll.classList.remove('hidden');
           badgeEnroll.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20";
           badgeEnroll.innerText = "❌ Missing";
         } else if (!currentDob) {
-          alertTitle.innerText = "Date of Birth (DOB) Detect Nahi Hua — Dobara Scan Karein!";
+          alertTitle.innerText = "Date of Birth Not Detected — Please Re-Scan!";
           alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
-          alertMsg.innerText = "Enrollment Number verify ho gaya hai, lekin Date of Birth (DOB) detect nahi hui. Card ki DOB wali line focus mein rakh kar dobara scan karein.";
+          alertMsg.innerText = "Enrollment Number detected, but Date of Birth (DOB) could not be read. Please ensure the DOB text line is sharp and re-scan.";
 
           inpDob.classList.add('border-rose-500/60', 'bg-rose-500/5');
           badgeDob.classList.remove('hidden');
@@ -952,7 +970,7 @@
       const dob = document.getElementById('inputDob').value.trim();
 
       if (!enroll || !dob) {
-        alert("⚠️ Kripya ID Card ko dobara scan karein!\n\nAage badhne ke liye Enrollment Number (UG/PG) aur Date of Birth (DOB) dono detect hona zaroori hai.");
+        alert("⚠️ Please scan student ID card first!\n\nBoth Enrollment Number (UG/PG) and Date of Birth (DOB) are required to proceed.");
         updateCredentialState("", "");
         return;
       }
@@ -968,6 +986,7 @@
       document.getElementById('resultsSection').classList.add('hidden');
       const telemetry = document.getElementById('telemetrySection');
       telemetry.classList.remove('hidden');
+      telemetry.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       // Start Telemetry timer
       let seconds = 0;
