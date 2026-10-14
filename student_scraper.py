@@ -211,7 +211,7 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
 
 def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log_cb=None) -> Dict[str, Any]:
     """
-    Executes the complete headless scraping pipeline for Parul University UMS.
+    Executes the complete headless scraping pipeline for University UMS.
     Returns:
       {
         "success": bool,

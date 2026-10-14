@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parul University — Student Dossier Portal</title>
+  <title>University — Student Dossier Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -59,11 +59,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="h-10 w-10 rounded-lg bg-portal-accent/15 border border-portal-accent/30 flex items-center justify-center text-portal-accent font-bold text-lg shadow-sm">
-          PU
+          UNI
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">PARUL UNIVERSITY</h1>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">UNIVERSITY</h1>
             <span class="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-portal-800 text-slate-300 border border-slate-700">UMS Dossier</span>
           </div>
           <p class="text-xs text-slate-400">Automated Student Profile Extraction & Verification Portal</p>
@@ -221,7 +221,7 @@
             <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span>Step 2: Verify Credentials</span>
           </div>
-          <span class="text-[10px] uppercase font-mono text-slate-400">Editable Inputs</span>
+          <span class="text-[10px] uppercase font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">Auto-Filled by Scanner</span>
         </div>
 
         <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-4">
@@ -241,15 +241,12 @@
                 type="text" 
                 id="inputEnrollment" 
                 required 
-                placeholder="e.g. 24UG012345 ya 210303105001" 
-                oninput="this.value = this.value.toUpperCase().replace(/\s+/g, '')"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950 border border-portal-700 text-white font-mono text-sm focus:outline-none focus:border-portal-accent focus:ring-1 focus:ring-portal-accent transition placeholder-slate-600"
+                readonly
+                placeholder="Scan / Upload ID card to populate" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600"
               />
-              <button type="button" onclick="document.getElementById('inputEnrollment').focus()" class="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-              </button>
             </div>
-            <p class="text-[11px] text-slate-400">Card ke barcode ke niche ya photo ke upar likha number (e.g. 24UG012345).</p>
+            <p class="text-[11px] text-slate-400">Card scan ya upload karne par automatic yahan aayega.</p>
           </div>
 
           <!-- Date of Birth (DOB) Input -->
@@ -267,22 +264,17 @@
                 type="text" 
                 id="inputDob" 
                 required 
+                readonly
                 maxlength="8"
-                placeholder="e.g. 15082003 (DDMMYYYY)" 
-                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950 border border-portal-700 text-white font-mono text-sm focus:outline-none focus:border-portal-accent focus:ring-1 focus:ring-portal-accent transition placeholder-slate-600"
+                placeholder="Scan / Upload ID card to populate" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-portal-950/80 border border-portal-700 text-white font-mono text-sm focus:outline-none cursor-not-allowed select-none placeholder-slate-600"
               />
             </div>
-            <p class="text-[11px] text-slate-400">Format: DDMMYYYY bina '-' ya '/' ke (e.g. 15082003).</p>
+            <p class="text-[11px] text-slate-400">Card scan ya upload karne par automatic yahan aayega.</p>
           </div>
 
-          <!-- Raw Scanned Text Accordion (Optional Inspection) -->
-          <details class="text-xs text-slate-400 bg-portal-950 rounded-lg border border-portal-800 p-2.5">
-            <summary class="cursor-pointer font-medium text-slate-300 hover:text-white select-none">
-              View Raw Scanned Text (OCR Output)
-            </summary>
-            <pre id="rawOcrText" class="mt-2 p-2 bg-black/50 rounded text-[11px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto text-slate-400">Card scan karne ke baad yahan pure text preview aayega...</pre>
-          </details>
+          <!-- Hidden OCR text buffer for JS -->
+          <pre id="rawOcrText" class="hidden"></pre>
 
           <!-- Primary Submit Button -->
           <button 
@@ -465,7 +457,7 @@
 
   <!-- Footer -->
   <footer class="border-t border-portal-800 py-8 text-center text-xs text-slate-500 font-mono mt-16">
-    Parul University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
+    University Student Dossier Service • Render Invisible Browser Core • OpenPyXL Segoe UI Engine
   </footer>
 
   <!-- JAVASCRIPT CONTROLLER -->
@@ -701,14 +693,14 @@
 
       } catch (err) {
         console.error("OCR error:", err);
-        statusText.innerText = 'OCR scan error. Enter details manually.';
+        statusText.innerText = 'OCR scan error. Please re-scan or upload a clear card image.';
         setTimeout(() => progressCard.classList.add('hidden'), 3500);
       } finally {
         isOcrRunning = false;
       }
     }
 
-    // Smart Regex parsing for Parul University ID Cards
+    // Smart Regex parsing for University ID Cards
     function extractCredentialsFromText(text) {
       if (!text) return { foundEnrollment: "", foundDob: "" };
 
@@ -884,7 +876,7 @@
       setTimeout(() => setStepState(1, 'done', 'Headless Chromium session ready.'), 2000);
 
       setTimeout(() => {
-        setStepState(2, 'active', 'Navigating to https://ums.paruluniversity.ac.in and selecting Student role...');
+        setStepState(2, 'active', 'Navigating to University UMS Portal and selecting Student role...');
       }, 2500);
 
       setTimeout(() => {
