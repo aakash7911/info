@@ -80,12 +80,17 @@
         </div>
       </div>
       
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2.5">
+        <!-- Live Database Connection Indicator -->
+        <div id="dbStatusPill" class="inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-800 text-[11px] font-mono border border-slate-700 transition" title="Checking database connectivity...">
+          <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="dbStatusText" class="text-slate-300">DB: Checking...</span>
+        </div>
+
         <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Gateway: READY</span>
         </div>
-        <a href="#extractForm" class="text-xs text-slate-400 hover:text-white transition px-2 py-1 rounded bg-portal-800/60 border border-portal-700 sm:border-0 sm:bg-transparent">Scan ID</a>
       </div>
     </div>
   </header>
@@ -621,7 +626,37 @@
           }
         });
       }
+      checkDatabaseStatus();
     });
+
+    // Fetch live database connection status from server
+    async function checkDatabaseStatus() {
+      try {
+        const res = await fetch('/api/db/status');
+        const data = await res.json();
+        const pill = document.getElementById('dbStatusPill');
+        const dot = document.getElementById('dbStatusDot');
+        const txt = document.getElementById('dbStatusText');
+        if (!pill || !dot || !txt) return;
+
+        if (data.status === 'connected') {
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[11px] font-mono shadow-sm";
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+          txt.innerText = `DB: Connected (${data.total_students_saved || 0})`;
+          pill.title = `Connected to MongoDB database '${data.database}'. Total saved: ${data.total_students_saved || 0}`;
+        } else if (data.status === 'not_configured') {
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[11px] font-mono";
+          dot.className = "w-2 h-2 rounded-full bg-amber-400";
+          txt.innerText = "DB: Not Configured";
+          pill.title = data.hint || "Set MONGODB_URI in Render Environment";
+        } else {
+          pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[11px] font-mono";
+          dot.className = "w-2 h-2 rounded-full bg-rose-400";
+          txt.innerText = "DB: Disconnected";
+          pill.title = `${data.message || 'Connection failed'}. Hint: ${data.hint || ''}`;
+        }
+      } catch (e) {}
+    }
 
     // Preprocess image on canvas (sharpen & contrast boost for OCR)
     function enhanceImageForOCR(dataUrl) {
@@ -1056,8 +1091,14 @@
       btnDownload.href = `/api/download/${data.filename}`;
       btnDownload.download = data.filename;
 
-      document.getElementById('resultsStats').innerText = 
-        `Total ${data.total_fields} fields extracted across ${Object.keys(data.sections).length} sections. Fees skipped.`;
+      if (data.saved_to_mongo) {
+        document.getElementById('resultsStats').innerText = 
+          `Total ${data.total_fields} fields extracted across ${Object.keys(data.sections).length} sections. Saved to MongoDB & Excel compiled.`;
+        checkDatabaseStatus();
+      } else {
+        document.getElementById('resultsStats').innerText = 
+          `Total ${data.total_fields} fields extracted across ${Object.keys(data.sections).length} sections. Fees skipped.`;
+      }
 
       // Profile Summary Overview
       const sum = data.summary || {};

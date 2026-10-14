@@ -35,6 +35,25 @@ class ScrapeRequest(BaseModel):
     dob: str = Field(..., description="Student Date of Birth (DD/MM/YYYY or DD-MM-YYYY)")
     headless: bool = Field(default=True, description="Run invisible headless browser (default True)")
 
+@app.on_event("startup")
+async def startup_event():
+    print("\n" + "=" * 65, flush=True)
+    print("🚀 [STARTUP] Verifying MongoDB Connection Status...", flush=True)
+    health = check_mongo_health()
+    status = health.get("status")
+    if status == "connected":
+        print(f"✅ [MONGODB SUCCESS] Connected to cluster successfully!", flush=True)
+        print(f"   Database: {health.get('database')}", flush=True)
+        print(f"   Total Saved Students: {health.get('total_students_saved')}", flush=True)
+    elif status == "not_configured":
+        print("⚠️ [MONGODB WARNING] MONGODB_URI is not set in Render Environment.", flush=True)
+        print("   Set MONGODB_URI to automatically save student profiles.", flush=True)
+    else:
+        print(f"❌ [MONGODB ERROR] Connection failed: {health.get('message')}", flush=True)
+        if health.get("hint"):
+            print(f"👉 [ACTION REQUIRED] {health.get('hint')}", flush=True)
+    print("=" * 65 + "\n", flush=True)
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_scanner_ui():
     """Serves the bespoke ID card scanner and dossier web application."""

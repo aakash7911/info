@@ -7,9 +7,11 @@ from pymongo import MongoClient
 
 logger = logging.getLogger("mongo_service")
 
-# Global cached client
+# Global cached client & error diagnostics
 _mongo_client: Optional[MongoClient] = None
 _db_name: Optional[str] = None
+_last_mongo_error: Optional[str] = None
+_last_mongo_hint: Optional[str] = None
 
 
 def get_mongo_uri() -> Optional[str]:
@@ -22,29 +24,54 @@ def get_mongo_uri() -> Optional[str]:
 
 
 def get_mongo_db():
-    """Initializes and returns cached MongoDB database connection."""
-    global _mongo_client, _db_name
+    """Initializes and returns cached MongoDB database connection with detailed error diagnostics."""
+    global _mongo_client, _db_name, _last_mongo_error, _last_mongo_hint
     uri = get_mongo_uri()
     if not uri:
+        _last_mongo_error = "MONGODB_URI environment variable is not set."
+        _last_mongo_hint = "Add MONGODB_URI in Render dashboard -> Environment."
+        return None
+
+    # Detect unreplaced password placeholders
+    if "<db_password>" in uri or "<password>" in uri:
+        _last_mongo_error = "Found unreplaced '<db_password>' placeholder in connection string."
+        _last_mongo_hint = "In Render Environment, replace '<db_password>' with your actual database user password."
+        logger.error(_last_mongo_error)
         return None
 
     if _mongo_client is None:
         try:
-            logger.info("Connecting to MongoDB instance...")
-            _mongo_client = MongoClient(
+            logger.info("Attempting MongoDB connection...")
+            client = MongoClient(
                 uri,
                 serverSelectionTimeoutMS=5000,
                 connectTimeoutMS=5000,
                 socketTimeoutMS=10000,
                 appname="university_student_portal"
             )
-            # Test ping
-            _mongo_client.admin.command("ping")
+            # Test ping to verify authentication & network reachability
+            client.admin.command("ping")
+            
             db_name = os.getenv("MONGODB_DB_NAME") or "student_dossier_db"
             _db_name = db_name
+            _mongo_client = client
+            _last_mongo_error = None
+            _last_mongo_hint = None
             logger.info(f"MongoDB successfully connected. Active database: {db_name}")
         except Exception as e:
-            logger.warning(f"MongoDB connection initialization warning: {e}")
+            err_str = str(e)
+            _last_mongo_error = err_str
+            logger.warning(f"MongoDB connection failed: {err_str}")
+
+            if "Authentication failed" in err_str or "bad auth" in err_str:
+                _last_mongo_hint = "Authentication failed: Please verify your MongoDB database username and password in Render Environment."
+            elif "ServerSelectionTimeoutError" in err_str or "timed out" in err_str:
+                _last_mongo_hint = "Connection timed out. In MongoDB Atlas, go to Network Access -> Add IP Address -> Select '0.0.0.0/0' (Allow Access from Anywhere) and click Confirm."
+            elif "ConfigurationError" in err_str:
+                _last_mongo_hint = "Invalid connection URI format. Ensure your connection string starts with mongodb+srv:// or mongodb://."
+            else:
+                _last_mongo_hint = "Verify your MongoDB Atlas cluster status and Network Access IP whitelist (0.0.0.0/0)."
+
             _mongo_client = None
             return None
 
@@ -130,13 +157,15 @@ def save_student_dossier(
 
 
 def check_mongo_health() -> Dict[str, Any]:
-    """Returns the current MongoDB connection health."""
+    """Returns the current MongoDB connection health with actionable diagnostic hints."""
+    global _last_mongo_error, _last_mongo_hint
     uri = get_mongo_uri()
     if not uri:
         return {
             "configured": False,
             "status": "not_configured",
-            "message": "MONGODB_URI environment variable is not set."
+            "message": "MONGODB_URI environment variable is not set.",
+            "hint": "Set MONGODB_URI in Render dashboard -> Environment tab."
         }
     try:
         db = get_mongo_db()
@@ -144,7 +173,8 @@ def check_mongo_health() -> Dict[str, Any]:
             return {
                 "configured": True,
                 "status": "disconnected",
-                "message": "Could not connect to MongoDB instance."
+                "message": _last_mongo_error or "Could not connect to MongoDB instance.",
+                "hint": _last_mongo_hint or "Check Network Access (0.0.0.0/0) and credentials in MongoDB Atlas."
             }
         db.command("ping")
         count = db.students.count_documents({})
@@ -152,11 +182,13 @@ def check_mongo_health() -> Dict[str, Any]:
             "configured": True,
             "status": "connected",
             "database": db.name,
-            "total_students_saved": count
+            "total_students_saved": count,
+            "message": "MongoDB is actively connected and saving dossiers."
         }
     except Exception as e:
         return {
             "configured": True,
             "status": "error",
-            "error": str(e)
+            "message": str(e),
+            "hint": "Verify your MongoDB Atlas cluster status."
         }
