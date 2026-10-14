@@ -276,14 +276,27 @@
           <!-- Hidden OCR text buffer for JS -->
           <pre id="rawOcrText" class="hidden"></pre>
 
-          <!-- Primary Submit Button -->
+          <!-- Real-Time Scanner Status / Warning Alert Banner -->
+          <div id="scanStatusAlert" class="hidden p-3.5 rounded-xl border text-xs space-y-1.5 transition-all">
+            <div class="flex items-center space-x-2 font-bold" id="scanAlertTitleBox">
+              <span id="scanAlertIcon" class="text-base">⚠️</span>
+              <span id="scanAlertTitle">Card Scan Incomplete</span>
+            </div>
+            <p id="scanAlertMessage" class="text-slate-300 leading-relaxed text-[11px]">
+              Details missing. Kripya card ko dobara scan karein.
+            </p>
+          </div>
+
+          <!-- Primary Submit Button (Locked until BOTH Enrollment & DOB are detected) -->
           <button 
             type="submit" 
             id="btnSubmit" 
-            class="w-full py-3.5 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 transition flex items-center justify-center space-x-2"
+            disabled
+            class="w-full py-3.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span id="btnSubmitText">Fetch & Compile Student Dossier</span>
+            <svg id="btnSubmitIconLock" class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <svg id="btnSubmitIconLightning" class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span id="btnSubmitText">🔒 Scan ID Card to Unlock Dossier</span>
           </button>
         </form>
 
@@ -649,9 +662,12 @@
       const statusText = document.getElementById('ocrStatusText');
 
       progressCard.classList.remove('hidden');
+      progressBar.className = 'bg-portal-accent h-1.5 rounded-full transition-all duration-300';
       progressBar.style.width = '15%';
       progressPercent.innerText = '15%';
       statusText.innerText = 'Enhancing image quality...';
+      const scanAlert = document.getElementById('scanStatusAlert');
+      if (scanAlert) scanAlert.classList.add('hidden');
 
       try {
         const enhancedData = await enhanceImageForOCR(imageData);
@@ -681,22 +697,129 @@
         // Parse Enrollment & DOB with Enhanced Regex
         const { foundEnrollment, foundDob } = extractCredentialsFromText(rawText);
 
-        if (foundEnrollment || foundDob) {
-          statusText.innerText = `Success! Detected: ${foundEnrollment || ''} ${foundDob || ''}`;
+        const isBothComplete = updateCredentialState(foundEnrollment, foundDob);
+
+        if (isBothComplete) {
+          statusText.innerText = `Success! Detected: ${foundEnrollment} | ${foundDob}`;
+          progressBar.className = 'bg-emerald-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = '100%';
-          setTimeout(() => progressCard.classList.add('hidden'), 2000);
+          setTimeout(() => progressCard.classList.add('hidden'), 2500);
         } else {
-          statusText.innerText = 'Card text read. Please verify fields below.';
-          setTimeout(() => progressCard.classList.add('hidden'), 3000);
+          statusText.innerText = '⚠️ Scan adhoora hai: Kripya card ko dobara scan karein!';
+          progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
+          progressBar.style.width = '100%';
+          progressPercent.innerText = 'Incomplete';
+          setTimeout(() => progressCard.classList.add('hidden'), 4000);
         }
 
       } catch (err) {
         console.error("OCR error:", err);
-        statusText.innerText = 'OCR scan error. Please re-scan or upload a clear card image.';
+        statusText.innerText = 'OCR scan error. Kripya clear image ke sath dobara scan karein.';
+        progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
+        updateCredentialState("", "");
         setTimeout(() => progressCard.classList.add('hidden'), 3500);
       } finally {
         isOcrRunning = false;
+      }
+    }
+
+    // State management for scanned credentials & submit locking
+    function updateCredentialState(foundEnrollment, foundDob) {
+      const inpEnroll = document.getElementById('inputEnrollment');
+      const inpDob = document.getElementById('inputDob');
+      const badgeEnroll = document.getElementById('badgeEnroll');
+      const badgeDob = document.getElementById('badgeDob');
+      const btnSubmit = document.getElementById('btnSubmit');
+      const btnText = document.getElementById('btnSubmitText');
+      const iconLock = document.getElementById('btnSubmitIconLock');
+      const iconLightning = document.getElementById('btnSubmitIconLightning');
+      const alertBox = document.getElementById('scanStatusAlert');
+      const alertTitle = document.getElementById('scanAlertTitle');
+      const alertMsg = document.getElementById('scanAlertMessage');
+      const alertIcon = document.getElementById('scanAlertIcon');
+
+      // Update enrollment input if newly found
+      if (foundEnrollment) {
+        inpEnroll.value = foundEnrollment;
+        inpEnroll.classList.remove('border-rose-500/60', 'border-portal-700', 'bg-rose-500/10');
+        inpEnroll.classList.add('border-emerald-500', 'bg-emerald-500/5');
+        badgeEnroll.classList.remove('hidden', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+        badgeEnroll.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+        badgeEnroll.innerText = "✓ OCR Detected";
+      }
+
+      // Update dob input if newly found
+      if (foundDob) {
+        inpDob.value = foundDob;
+        inpDob.classList.remove('border-rose-500/60', 'border-portal-700', 'bg-rose-500/10');
+        inpDob.classList.add('border-emerald-500', 'bg-emerald-500/5');
+        badgeDob.classList.remove('hidden', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+        badgeDob.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+        badgeDob.innerText = "✓ OCR Detected";
+      }
+
+      const currentEnroll = inpEnroll.value.trim();
+      const currentDob = inpDob.value.trim();
+
+      if (currentEnroll && currentDob) {
+        // BOTH FOUND -> UNLOCK & PROCEED
+        btnSubmit.disabled = false;
+        btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-portal-accent hover:bg-portal-accentHover text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-900/40 cursor-pointer transition flex items-center justify-center space-x-2";
+        if (iconLock) iconLock.classList.add('hidden');
+        if (iconLightning) iconLightning.classList.remove('hidden');
+        btnText.innerText = "Fetch & Compile Student Dossier";
+
+        alertBox.className = "p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1";
+        alertBox.classList.remove('hidden');
+        alertIcon.innerText = "✅";
+        alertTitle.className = "text-emerald-300 font-bold";
+        alertTitle.innerText = "Card Scan Successful!";
+        alertMsg.className = "text-emerald-200/90 text-[11px] leading-relaxed";
+        alertMsg.innerText = `Enrollment Number (${currentEnroll}) aur Date of Birth (${currentDob}) dono verify ho gaye hain. Ab aap aage badh sakte hain!`;
+
+        playScanSuccessChime();
+        return true;
+      } else {
+        // EITHER OR BOTH MISSING -> LOCK & WARN TO RESCAN
+        btnSubmit.disabled = true;
+        btnSubmit.className = "w-full py-3.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-bold text-sm tracking-wide border border-slate-700/60 cursor-not-allowed transition flex items-center justify-center space-x-2 shadow-none";
+        if (iconLock) iconLock.classList.remove('hidden');
+        if (iconLightning) iconLightning.classList.add('hidden');
+        btnText.innerText = "🔒 Scan Incomplete — Kripya Dobara Scan Karein";
+
+        alertBox.className = "p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs space-y-1";
+        alertBox.classList.remove('hidden');
+        alertIcon.innerText = "⚠️";
+        alertTitle.className = "text-rose-300 font-bold";
+
+        if (!currentEnroll && !currentDob) {
+          alertTitle.innerText = "Card Details Miss Ho Gayi Hain — Dobara Scan Karein!";
+          alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
+          alertMsg.innerText = "Scanner ko na to Enrollment (UG/PG) number mila aur na hi Date of Birth (DOB). Kripya card ko camera ke seedha samne layein aur dobara scan karein ya saaf photo upload karein.";
+
+          inpEnroll.classList.add('border-rose-500/60', 'bg-rose-500/5');
+          inpDob.classList.add('border-rose-500/60', 'bg-rose-500/5');
+        } else if (!currentEnroll) {
+          alertTitle.innerText = "Enrollment Number Detect Nahi Hua — Dobara Scan Karein!";
+          alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
+          alertMsg.innerText = "Date of Birth verify ho gayi hai, lekin Enrollment (UG/PG) number detect nahi hua. Barcode ke niche wala number focus mein rakh kar dobara scan karein.";
+
+          inpEnroll.classList.add('border-rose-500/60', 'bg-rose-500/5');
+          badgeEnroll.classList.remove('hidden');
+          badgeEnroll.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20";
+          badgeEnroll.innerText = "❌ Missing";
+        } else if (!currentDob) {
+          alertTitle.innerText = "Date of Birth (DOB) Detect Nahi Hua — Dobara Scan Karein!";
+          alertMsg.className = "text-rose-200/90 text-[11px] leading-relaxed";
+          alertMsg.innerText = "Enrollment Number verify ho gaya hai, lekin Date of Birth (DOB) detect nahi hui. Card ki DOB wali line focus mein rakh kar dobara scan karein.";
+
+          inpDob.classList.add('border-rose-500/60', 'bg-rose-500/5');
+          badgeDob.classList.remove('hidden');
+          badgeDob.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20";
+          badgeDob.innerText = "❌ Missing";
+        }
+        return false;
       }
     }
 
@@ -709,7 +832,7 @@
 
       // Normalize common OCR spacing issues (e.g. "XX UG XXXXXX" -> "XXUGXXXXXX")
       let cleanText = text
-        .replace(/([0-9]{2})\s*([uU][gG]|[pP][gG]|[dD][iI][pP]|[pP][hH][dD])\s*([0-9a-zA-Z]{4,10})/g, '$1$2$3')
+        .replace(/([0-9]{2})\s*([uUjJtTvV][gG]|[pP][gG]|[dD][iI][pP]|[pP][hH][dD])\s*([0-9a-zA-Z]{4,10})/g, '$1$2$3')
         .replace(/([0-9]{2})\s+([0-9]{6,12})/g, '$1$2');
 
       // 1. Enrollment / UG / PG Number Extraction
@@ -720,10 +843,11 @@
         // Pick clean match (e.g. 26UG033233)
         foundEnrollment = allUgMatches[0][1].replace(/\s+/g, '').toUpperCase().trim();
       } else {
-        // Fuzzy match in case 1 or I got inserted between year and UG (e.g. 261JG -> 26UG)
-        const fuzzy = cleanText.match(/\b([0-9]{2})\s*[1lI|]?\s*([uU][gG]|[pP][gG])\s*([0-9A-Z]{4,8})\b/i);
+        // Fuzzy match in case 1, I or | got inserted between year and UG (e.g. 261JG -> 26UG, 261UG -> 26UG)
+        const fuzzy = cleanText.match(/\b([0-9]{2})\s*[1lI|]?\s*([uUjJtTvV][gG]|[pP][gG])\s*([0-9A-Z]{4,8})\b/i);
         if (fuzzy) {
-          foundEnrollment = (fuzzy[1] + fuzzy[2] + fuzzy[3]).toUpperCase();
+          const normType = /^[jJtTvV]g$/i.test(fuzzy[2]) ? 'UG' : fuzzy[2].toUpperCase();
+          foundEnrollment = (fuzzy[1] + normType + fuzzy[3]).toUpperCase();
         } else {
           // General enrollment numbers (10-15 digits or alphanumeric)
           const generalRegexes = [
@@ -773,25 +897,6 @@
         if (foundDob.length > 8) {
           foundDob = foundDob.slice(0, 8);
         }
-      }
-
-      if (foundEnrollment) {
-        const inpEnroll = document.getElementById('inputEnrollment');
-        inpEnroll.value = foundEnrollment;
-        document.getElementById('badgeEnroll').classList.remove('hidden');
-        inpEnroll.classList.add('border-emerald-500');
-      }
-
-      if (foundDob) {
-        const inpDob = document.getElementById('inputDob');
-        inpDob.value = foundDob;
-        document.getElementById('badgeDob').classList.remove('hidden');
-        inpDob.classList.add('border-emerald-500');
-      }
-
-      // Play subtle chime on success
-      if (foundEnrollment || foundDob) {
-        playScanSuccessChime();
       }
 
       return { foundEnrollment, foundDob };
@@ -847,7 +952,8 @@
       const dob = document.getElementById('inputDob').value.trim();
 
       if (!enroll || !dob) {
-        alert("Kripya Enrollment number aur Date of Birth dono enter karein.");
+        alert("⚠️ Kripya ID Card ko dobara scan karein!\n\nAage badhne ke liye Enrollment Number (UG/PG) aur Date of Birth (DOB) dono detect hona zaroori hai.");
+        updateCredentialState("", "");
         return;
       }
 
