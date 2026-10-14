@@ -608,6 +608,44 @@
       }
     });
 
+    // Preprocess image on canvas (sharpen & contrast boost for OCR)
+    function enhanceImageForOCR(dataUrl) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width;
+          let h = img.height;
+          // Scale up to crisp 1400px width if small
+          if (w < 1400) {
+            const scale = 1400 / w;
+            w = 1400;
+            h = Math.round(h * scale);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // Contrast boost for text readability
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const d = imgData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            // S-curve contrast stretch
+            const val = gray > 130 ? Math.min(255, gray * 1.15) : Math.max(0, gray * 0.85);
+            d[i] = val;
+            d[i + 1] = val;
+            d[i + 2] = val;
+          }
+          ctx.putImageData(imgData, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.92));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
     // Core OCR Execution (Tesseract.js in Browser)
     async function processImageWithOCR(imageData) {
       if (isOcrRunning) return;
@@ -619,38 +657,52 @@
       const statusText = document.getElementById('ocrStatusText');
 
       progressCard.classList.remove('hidden');
-      progressBar.style.width = '10%';
-      progressPercent.innerText = '10%';
-      statusText.innerText = 'Initializing OCR Engine...';
+      progressBar.style.width = '15%';
+      progressPercent.innerText = '15%';
+      statusText.innerText = 'Enhancing image quality...';
 
       try {
-        const worker = await Tesseract.createWorker('eng', 1, {
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              const p = Math.round(m.progress * 100);
-              progressBar.style.width = `${p}%`;
-              progressPercent.innerText = `${p}%`;
-              statusText.innerText = `Recognizing text on ID Card (${p}%)...`;
+        const enhancedData = await enhanceImageForOCR(imageData);
+
+        statusText.innerText = 'Reading ID Card with OCR...';
+        progressBar.style.width = '35%';
+        progressPercent.innerText = '35%';
+
+        const res = await Tesseract.recognize(
+          enhancedData,
+          'eng',
+          {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                const p = Math.round(m.progress * 100);
+                progressBar.style.width = `${Math.max(15, p)}%`;
+                progressPercent.innerText = `${p}%`;
+                statusText.innerText = `Scanning ID Card (${p}%)...`;
+              }
             }
           }
-        });
-
-        const res = await worker.recognize(imageData);
-        await worker.terminate();
+        );
 
         const rawText = res.data.text || '';
         document.getElementById('rawOcrText').innerText = rawText;
 
-        // Parse Enrollment & DOB with Smart Regex
-        extractCredentialsFromText(rawText);
+        // Parse Enrollment & DOB with Enhanced Regex
+        const { foundEnrollment, foundDob } = extractCredentialsFromText(rawText);
 
-        statusText.innerText = 'Extraction complete!';
-        setTimeout(() => progressCard.classList.add('hidden'), 1500);
+        if (foundEnrollment || foundDob) {
+          statusText.innerText = `Success! Detected: ${foundEnrollment || ''} ${foundDob || ''}`;
+          progressBar.style.width = '100%';
+          progressPercent.innerText = '100%';
+          setTimeout(() => progressCard.classList.add('hidden'), 2000);
+        } else {
+          statusText.innerText = 'Card text read. Please verify fields below.';
+          setTimeout(() => progressCard.classList.add('hidden'), 3000);
+        }
 
       } catch (err) {
         console.error("OCR error:", err);
-        statusText.innerText = 'OCR scan failed. Enter details manually.';
-        setTimeout(() => progressCard.classList.add('hidden'), 3000);
+        statusText.innerText = 'OCR scan error. Enter details manually.';
+        setTimeout(() => progressCard.classList.add('hidden'), 3500);
       } finally {
         isOcrRunning = false;
       }
@@ -658,7 +710,7 @@
 
     // Smart Regex parsing for Parul University ID Cards
     function extractCredentialsFromText(text) {
-      if (!text) return;
+      if (!text) return { foundEnrollment: "", foundDob: "" };
 
       let foundEnrollment = "";
       let foundDob = "";
@@ -669,34 +721,39 @@
         .replace(/([0-9]{2})\s+([0-9]{6,12})/g, '$1$2');
 
       // 1. Enrollment / UG / PG Number Extraction
-      // Look for all UG/PG patterns and pick the LAST one (at the bottom under the barcode)
-      const ugPattern = /\b([0-9]{2}(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,10})\b/gi;
+      const ugPattern = /\b([0-9]{2}\s*(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,8})\b/gi;
       const allUgMatches = [...cleanText.matchAll(ugPattern)];
 
       if (allUgMatches.length > 0) {
-        // Pick the bottom-most match (nearest barcode / bottom edge)
-        foundEnrollment = allUgMatches[allUgMatches.length - 1][1].toUpperCase().trim();
+        // Pick clean match (e.g. 26UG033233)
+        foundEnrollment = allUgMatches[0][1].replace(/\s+/g, '').toUpperCase().trim();
       } else {
-        // Fallback: Labelled or general enrollment formats
-        const generalRegexes = [
-          /(?:enrollment|enroll|ug\s*no|roll|reg|student\s*id|id)[\s\.:#-]*([0-9A-Z]{6,16})/i,
-          /\b([0-9]{2}[A-Z]{2,3}[0-9A-Z]{4,10})\b/i,
-          /\b(19|20|21|22|23|24|25|26)[0-9]{8,13}\b/,
-          /\b[0-9]{11,15}\b/
-        ];
-        for (const rx of generalRegexes) {
-          const m = cleanText.match(rx);
-          if (m) {
-            foundEnrollment = (m[1] || m[0]).toUpperCase().trim();
-            break;
+        // Fuzzy match in case 1 or I got inserted between year and UG (e.g. 261JG -> 26UG)
+        const fuzzy = cleanText.match(/\b([0-9]{2})\s*[1lI|]?\s*([uU][gG]|[pP][gG])\s*([0-9A-Z]{4,8})\b/i);
+        if (fuzzy) {
+          foundEnrollment = (fuzzy[1] + fuzzy[2] + fuzzy[3]).toUpperCase();
+        } else {
+          // General enrollment numbers (10-15 digits or alphanumeric)
+          const generalRegexes = [
+            /(?:enrollment|enroll|ug\s*no|roll|reg|student\s*id|id)[\s\.:#-]*([0-9A-Z]{6,16})/i,
+            /\b([0-9]{2}[A-Z]{2,3}[0-9A-Z]{4,10})\b/i,
+            /\b(19|20|21|22|23|24|25|26)[0-9]{8,13}\b/,
+            /\b[0-9]{10,15}\b/
+          ];
+          for (const rx of generalRegexes) {
+            const m = cleanText.match(rx);
+            if (m) {
+              foundEnrollment = (m[1] || m[0]).replace(/\s+/g, '').toUpperCase().trim();
+              break;
+            }
           }
         }
       }
 
-      // 2. DOB Extraction without '-' or '/' (pure DDMMYYYY)
+      // 2. DOB Extraction without '-' or '/' (pure DDMMYYYY e.g. 01012008)
       const dobRegexes = [
-        /(?:birth\s*date|dob|birth|d\.o\.b)[\s\.:#-]*([0-9]{1,2})[\/\-\.\s]+([0-9]{1,2})[\/\-\.\s]+([0-9]{2,4})/i,
         /\b([0-9]{1,2})[\/\-\.]([0-9]{1,2})[\/\-\.]([0-9]{4})\b/,
+        /(?:birth\s*date|dob|birth|d\.o\.b|date)[\s\.:#-]*([0-9]{1,2})[\/\-\.\s]+([0-9]{1,2})[\/\-\.\s]+([0-9]{2,4})/i,
         /\b([0-9]{2})([0-9]{2})([0-9]{4})\b/
       ];
 
@@ -744,6 +801,8 @@
       if (foundEnrollment || foundDob) {
         playScanSuccessChime();
       }
+
+      return { foundEnrollment, foundDob };
     }
 
     // Audio chime feedback

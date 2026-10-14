@@ -233,7 +233,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             except Exception:
                 pass
 
-    portal_url = "https://ums.paruluniversity.ac.in/StudentPanel"
+    portal_url = "https://ums.paruluniversity.ac.in/StudentPanel/"
     all_sections_data: List[Dict[str, str]] = []
     driver = None
 
@@ -251,7 +251,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         # ---------------------------------------------------------------------
         log("Switching to Student section...")
         student_selectors = [
-            "//input[@type='radio' and contains(@value, 'Student')]",
+            "//input[@id='rblRole_1' or (@type='radio' and contains(@value, 'Student'))]",
             "//label[contains(text(), 'Student')]",
             "//a[translate(normalize-space(text()), 'STUDENT', 'student')='student']",
             "//button[translate(normalize-space(text()), 'STUDENT', 'student')='student']"
@@ -262,7 +262,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 for el in elements:
                     if el.is_displayed():
                         driver.execute_script("arguments[0].click();", el)
-                        time.sleep(1)
+                        time.sleep(1.2)
                         break
             except Exception:
                 continue
@@ -272,17 +272,27 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         # ---------------------------------------------------------------------
         log("Entering enrollment number and date of birth...")
         enroll_input = wait.until(EC.visibility_of_element_located((
-            By.XPATH, "//input[contains(@id, 'txtEnrollment') or contains(@placeholder, 'Enrollment') or @type='text'][1]"
+            By.XPATH, "//input[contains(@id, 'txtEnrollment') or contains(@id, 'txtUsername') or contains(@placeholder, 'Enrollment') or @type='text'][1]"
         )))
         enroll_input.clear()
         enroll_input.send_keys(enrollment_no)
         time.sleep(0.8)
 
-        # TAB to DOB field
-        enroll_input.send_keys(Keys.TAB)
-        time.sleep(0.8)
-        active_field = driver.switch_to.active_element
-        active_field.send_keys(dob)
+        # Fill password / DOB directly or fallback via TAB
+        pwd_filled = False
+        try:
+            pwd_input = driver.find_element(By.XPATH, "//input[contains(@id, 'txtPassword') or contains(@id, 'txtDob') or @type='password']")
+            if pwd_input.is_displayed():
+                pwd_input.clear()
+                pwd_input.send_keys(dob)
+                pwd_filled = True
+        except Exception:
+            pass
+
+        if not pwd_filled:
+            enroll_input.send_keys(Keys.TAB)
+            time.sleep(0.5)
+            driver.switch_to.active_element.send_keys(dob)
         time.sleep(0.8)
 
         # ---------------------------------------------------------------------
