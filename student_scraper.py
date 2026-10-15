@@ -559,7 +559,7 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
                         continue
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", t)
                     driver.execute_script("arguments[0].click();", t)
-                    time.sleep(2.0)
+                    time.sleep(1.0)
                     break
             except Exception:
                 continue
@@ -617,7 +617,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
 
         log("Navigating to UMS portal...")
         driver.get(portal_url)
-        time.sleep(2)
+        time.sleep(1.2)
 
         # ---------------------------------------------------------------------
         # STEP 1: STUDENT SECTION SWITCH
@@ -635,7 +635,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 for el in elements:
                     if el.is_displayed():
                         driver.execute_script("arguments[0].click();", el)
-                        time.sleep(1.2)
+                        time.sleep(0.5)
                         break
             except Exception:
                 continue
@@ -649,7 +649,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         )))
         enroll_input.clear()
         enroll_input.send_keys(enrollment_no)
-        time.sleep(0.8)
+        time.sleep(0.4)
 
         clean_dob = re.sub(r'[^0-9]', '', dob)
         dob_to_send = clean_dob if len(clean_dob) == 8 else dob
@@ -667,9 +667,9 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
 
         if not pwd_filled:
             enroll_input.send_keys(Keys.TAB)
-            time.sleep(0.5)
+            time.sleep(0.3)
             driver.switch_to.active_element.send_keys(dob_to_send)
-        time.sleep(0.8)
+        time.sleep(0.4)
 
         # ---------------------------------------------------------------------
         # STEP 3: LOGIN BUTTON CLICK
@@ -701,7 +701,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         # STEP 4: POPUP HANDLE ("NO" CLICK)
         # ---------------------------------------------------------------------
         log("Checking for alerts and notification popups (clicking NO)...")
-        time.sleep(2)
+        time.sleep(1.0)
         for _ in range(12):
             try:
                 alert = driver.switch_to.alert
@@ -734,10 +734,10 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                     continue
             if done:
                 break
-            time.sleep(0.5)
+            time.sleep(0.3)
 
         log("Waiting for Student Dashboard to load...")
-        time.sleep(4)
+        time.sleep(2.5)
 
         # Check if login was rejected
         curr_url = driver.current_url.lower()
