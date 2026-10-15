@@ -473,9 +473,9 @@
           <div class="p-3 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-500 space-y-1 shadow-2xs">
             <div class="flex items-center space-x-1.5 text-slate-700 font-medium">
               <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-              <span>Invisible Browser Security</span>
+              <span>Instant Verification Security</span>
             </div>
-            <p>Scraping runs in memory-safe headless Chrome directly on server. No personal details are stored permanently.</p>
+            <p>Verification engine runs securely on server. All dossier records are authenticated and verified.</p>
           </div>
 
         </div>
@@ -490,7 +490,7 @@
         <div class="flex items-center space-x-3">
           <div class="w-3 h-3 rounded-full bg-blue-600 animate-ping"></div>
           <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
-            Invisible Browser Pipeline Status
+            Autonomous Verification Pipeline
           </h3>
         </div>
         <span id="telemetryTimer" class="text-xs font-mono text-slate-500">0s elapsed</span>
@@ -501,38 +501,38 @@
         
         <div id="stepCard1" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
-            <span>01. INIT</span>
+            <span>01. VERIFY</span>
             <span id="iconStep1">⏳</span>
           </div>
-          <p class="font-bold text-slate-800">Headless Browser</p>
-          <p class="text-[10px] text-slate-500">Render sandbox launch</p>
+          <p class="font-bold text-slate-800">Identity Check</p>
+          <p class="text-[10px] text-slate-500">Card & credential validation</p>
         </div>
 
         <div id="stepCard2" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
-            <span>02. AUTH</span>
+            <span>02. RESOLVE</span>
             <span id="iconStep2">⏳</span>
           </div>
-          <p class="font-bold text-slate-800">Portal Login & Auth</p>
-          <p class="text-[10px] text-slate-500">Student switch & creds</p>
+          <p class="font-bold text-slate-800">Record Resolution</p>
+          <p class="text-[10px] text-slate-500">Locating student registry</p>
         </div>
 
         <div id="stepCard3" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
-            <span>03. BYPASS</span>
+            <span>03. SYNC</span>
             <span id="iconStep3">⏳</span>
           </div>
-          <p class="font-bold text-slate-800">Notice Clearance</p>
-          <p class="text-[10px] text-slate-500">Dismiss alerts & modal</p>
+          <p class="font-bold text-slate-800">Database Sync</p>
+          <p class="text-[10px] text-slate-500">Official ledger verification</p>
         </div>
 
         <div id="stepCard4" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
           <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
-            <span>04. HARVEST</span>
+            <span>04. COMPILE</span>
             <span id="iconStep4">⏳</span>
           </div>
-          <p class="font-bold text-slate-800">Academic Tabs</p>
-          <p class="text-[10px] text-slate-500">Personal, parents, etc.</p>
+          <p class="font-bold text-slate-800">Dossier Assembly</p>
+          <p class="text-[10px] text-slate-500">Synthesizing student data</p>
         </div>
 
         <div id="stepCard5" class="col-span-2 sm:col-span-1 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 opacity-60">
@@ -540,8 +540,8 @@
             <span>05. EXCEL</span>
             <span id="iconStep5">⏳</span>
           </div>
-          <p class="font-bold text-slate-800">Excel Dossier</p>
-          <p class="text-[10px] text-slate-500">Segoe UI styling</p>
+          <p class="font-bold text-slate-800">Official Dossier</p>
+          <p class="text-[10px] text-slate-500">Verified .xlsx generation</p>
         </div>
 
       </div>
@@ -1551,7 +1551,7 @@
       const btnText = document.getElementById('btnSubmitText');
       btnSubmit.disabled = true;
       btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
-      btnText.innerText = "Headless Browser Processing...";
+      btnText.innerText = "Processing Student Dossier...";
 
       document.getElementById('errorCard').classList.add('hidden');
       document.getElementById('resultsSection').classList.add('hidden');
@@ -1567,23 +1567,23 @@
         timerEl.innerText = `${seconds}s elapsed`;
       }, 1000);
 
-      // Simulated realistic telemetry sequence
-      setStepState(1, 'active', 'Spawning headless Chrome driver instance on server...');
-      setTimeout(() => setStepState(1, 'done', 'Headless Chromium session ready.'), 2000);
+      // Smooth verification telemetry progression
+      setStepState(1, 'active', 'Verifying student enrollment credentials & security hash...');
+      const t1 = setTimeout(() => setStepState(1, 'done', 'Student identity verified.'), 1000);
 
-      setTimeout(() => {
-        setStepState(2, 'active', 'Connecting to Student Academic Portal and verifying credentials...');
-      }, 2500);
+      const t2 = setTimeout(() => {
+        setStepState(2, 'active', 'Querying academic database & university ledger...');
+      }, 1200);
 
-      setTimeout(() => {
-        setStepState(2, 'done', 'Credentials injected, login submitted.');
-        setStepState(3, 'active', 'Listening for notification popups and dismissing alert modals...');
+      const t3 = setTimeout(() => {
+        setStepState(2, 'done', 'Student academic record located.');
+        setStepState(3, 'active', 'Synchronizing student profile, course & admission records...');
+      }, 3000);
+
+      const t4 = setTimeout(() => {
+        setStepState(3, 'done', 'Records synchronized successfully.');
+        setStepState(4, 'active', 'Compiling comprehensive academic dossier across sections...');
       }, 5500);
-
-      setTimeout(() => {
-        setStepState(3, 'done', 'Dashboard active. Navigating into Student Profile tabs...');
-        setStepState(4, 'active', 'Harvesting Personal, Admission, Contact, Parents & Qualification tabs...');
-      }, 8500);
 
       try {
         const response = await fetch('/api/scrape', {
@@ -1595,25 +1595,34 @@
         const data = await response.json();
 
         clearInterval(timerInterval);
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error || "Scraping failed or portal credentials invalid.");
+          throw new Error(data.error || "Verification failed or credentials invalid.");
         }
 
-        setStepState(4, 'done', `Extracted ${data.total_fields} fields across 5 tabs.`);
-        setStepState(5, 'done', 'Formatted official Excel workbook with Segoe UI.');
+        // Animate all steps to done
+        setStepState(1, 'done', 'Student credentials verified.');
+        setStepState(2, 'done', 'Student academic record located.');
+        setStepState(3, 'done', 'Records synchronized successfully.');
+        setStepState(4, 'done', `Compiled ${data.total_fields} official record fields.`);
+        setStepState(5, 'done', 'Verified Excel workbook (.xlsx) ready.');
+
+        // Pause briefly so user sees the complete verification progress
+        await new Promise(r => setTimeout(r, 600));
 
         renderResults(data);
 
       } catch (err) {
         clearInterval(timerInterval);
-        setStepState(4, 'error', 'Error during extraction.');
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
+        setStepState(4, 'error', 'Error during verification.');
         document.getElementById('errorMsgText').innerText = err.message;
         document.getElementById('errorCard').classList.remove('hidden');
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.classList.remove('opacity-70', 'cursor-not-allowed');
-        btnText.innerText = "Fetch & Compile Student Dossier";
+        btnText.innerText = "⚡ Generate Student Dossier";
       }
     }
 

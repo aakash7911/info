@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
@@ -154,6 +155,41 @@ def save_student_dossier(
     except Exception as e:
         logger.error(f"Failed to save student dossier to MongoDB: {e}")
         return False
+
+
+def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """
+    Checks if student record already exists in MongoDB 'students' collection.
+    If found and DOB matches (or if sanitized digits match), returns the cached student profile.
+    """
+    uri = get_mongo_uri()
+    if not uri:
+        return None
+
+    try:
+        db = get_mongo_db()
+        if db is None:
+            return None
+
+        enrollment = enrollment_no.strip().upper()
+        doc = db.students.find_one({"enrollment_no": enrollment})
+        if not doc:
+            return None
+
+        # Verify DOB if provided
+        if dob:
+            clean_search_dob = re.sub(r'[^0-9]', '', dob)
+            clean_db_dob = re.sub(r'[^0-9]', '', doc.get("dob", ""))
+            if clean_search_dob and clean_db_dob and clean_search_dob != clean_db_dob:
+                logger.info(f"Student [{enrollment}] found in DB, but search DOB ({clean_search_dob}) != DB DOB ({clean_db_dob}). Skipping cache.")
+                return None
+
+        logger.info(f"Instant cache hit: Student [{enrollment}] already exists in MongoDB! Serving from cache.")
+        return doc
+
+    except Exception as e:
+        logger.warning(f"Error checking student cache in MongoDB: {e}")
+        return None
 
 
 def check_mongo_health() -> Dict[str, Any]:

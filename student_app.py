@@ -10,8 +10,10 @@ from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from student_scraper import scrape_student_data, DOSSIERS_DIR
-from mongo_service import save_student_dossier, check_mongo_health
+from datetime import datetime, timezone
+
+from student_scraper import scrape_student_data, generate_styled_excel, DOSSIERS_DIR
+from mongo_service import save_student_dossier, check_mongo_health, find_cached_student_dossier, get_mongo_db
 
 logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -31,7 +33,7 @@ def get_current_memory_mb() -> float:
 
 app = FastAPI(
     title="University — Student Dossier Gateway",
-    description="Automated Headless Extraction and Verification Engine for University UMS Portal",
+    description="Automated Student Verification & Academic Dossier Gateway Engine",
     version="1.0.0"
 )
 
@@ -112,19 +114,100 @@ async def db_status():
 @app.post("/api/scrape")
 async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     """
-    Triggers the headless browser automation to log into UMS,
-    harvest all student tabs, compile an Excel workbook,
-    and persist the entire record to MongoDB.
+    Retrieves or generates student dossier.
+    First checks MongoDB for cached dossier (bypassing portal login completely).
+    If not cached, launches headless browser automation, extracts data, and persists to MongoDB.
     Strictly serialized with SCRAPE_LOCK to prevent memory from ever exceeding 512MB RAM.
     """
-    enrollment = payload.enrollment_no.strip()
+    enrollment = payload.enrollment_no.strip().upper()
     dob = payload.dob.strip()
 
     if not enrollment or not dob:
         raise HTTPException(status_code=400, detail="Both enrollment_no and dob are required.")
 
     clean_dob = re.sub(r'[^0-9]', '', dob)
-    logger.info(f"Incoming scrape request for Enrollment: {enrollment} | DOB: {dob} (Sanitized digits: {clean_dob})")
+    logger.info(f"Incoming dossier request for Enrollment: {enrollment} | DOB: {dob} (Sanitized digits: {clean_dob})")
+
+    # -------------------------------------------------------------
+    # 1. CHECK MONGODB CACHE (FAST PATH - NO BROWSER NEEDED)
+    # -------------------------------------------------------------
+    cached_doc = find_cached_student_dossier(enrollment_no=enrollment, dob=dob)
+    if cached_doc:
+        logger.info(f"Instant cache hit in MongoDB for [{enrollment}]! Skipping browser login entirely.")
+
+        filename = cached_doc.get("latest_excel_filename") or f"Student_Dossier_{enrollment}.xlsx"
+        file_path = os.path.join(DOSSIERS_DIR, filename)
+        sections = cached_doc.get("sections") or {}
+
+        summary = {
+            "enrollment_no": enrollment,
+            "dob": dob,
+            "student_name": cached_doc.get("student_name") or "Unknown",
+            "course": cached_doc.get("course") or "Unknown",
+            "institute": "University",
+            "contact_mobile": "N/A",
+            "email": "N/A",
+            "domicile": cached_doc.get("domicile") or "Unknown"
+        }
+
+        # If file missing from ephemeral disk, regenerate Excel directly from cached sections
+        if not os.path.exists(file_path) and sections:
+            all_sections_data = []
+            for sec_name, field_list in sections.items():
+                for item in field_list:
+                    all_sections_data.append({
+                        "Section": sec_name,
+                        "Field Name": item.get("field", ""),
+                        "Value": item.get("value", "")
+                    })
+            if all_sections_data:
+                try:
+                    file_path = generate_styled_excel(all_sections_data, enrollment)
+                    filename = os.path.basename(file_path)
+                except Exception as ex:
+                    logger.warning(f"Could not regenerate cached Excel file: {ex}")
+
+        # Update access timestamp in MongoDB
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
+        try:
+            db = get_mongo_db()
+            if db is not None:
+                db.students.update_one(
+                    {"enrollment_no": enrollment},
+                    {"$set": {"last_accessed_at": datetime.now(timezone.utc), "last_client_ip": client_ip}}
+                )
+                db.scrape_history.insert_one({
+                    "enrollment_no": enrollment,
+                    "dob": dob,
+                    "student_name": summary.get("student_name"),
+                    "course": summary.get("course"),
+                    "total_fields": cached_doc.get("total_fields", 0),
+                    "excel_filename": filename,
+                    "extracted_at": datetime.now(timezone.utc),
+                    "client_ip": client_ip,
+                    "user_agent": user_agent,
+                    "status": "cache_hit"
+                })
+        except Exception:
+            pass
+
+        return JSONResponse(status_code=200, content={
+            "success": True,
+            "enrollment_no": enrollment,
+            "dob": dob,
+            "excel_path": file_path,
+            "filename": filename,
+            "total_fields": cached_doc.get("total_fields", 0),
+            "summary": summary,
+            "sections": sections,
+            "cached_from_db": True,
+            "error": None
+        })
+
+    # -------------------------------------------------------------
+    # 2. RUN BROWSER EXTRACTION IF NOT YET CACHED
+    # -------------------------------------------------------------
     logger.info(f"[MEM BEFORE SCRAPE] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
     # Serialize browser execution so only ONE headless Chrome instance runs at a time
@@ -142,7 +225,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     logger.info(f"[MEM AFTER SCRAPE & GC] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
     if not result.get("success"):
-        error_msg = result.get("error") or "Failed to extract student profile from UMS."
+        error_msg = result.get("error") or "Failed to extract student profile."
         logger.error(f"Scraping failed: {error_msg}")
         return JSONResponse(status_code=422, content=result)
 
