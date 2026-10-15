@@ -93,15 +93,15 @@
       </div>
       
       <div class="flex items-center space-x-2.5">
-        <!-- Live Database Connection Indicator -->
-        <div id="dbStatusPill" class="inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200 transition" title="Checking database connectivity...">
+        <!-- Live Engine Status Indicator -->
+        <div id="dbStatusPill" class="inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200 transition" title="Checking engine connectivity...">
           <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
-          <span id="dbStatusText" class="text-slate-700 font-medium">DB: Checking...</span>
+          <span id="dbStatusText" class="text-slate-700 font-medium">Engine: Connecting...</span>
         </div>
 
         <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Gateway: READY</span>
+          <span>Engine: READY</span>
         </div>
       </div>
     </div>
@@ -864,17 +864,17 @@
         if (data.status === 'connected') {
           pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-mono shadow-xs";
           dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-          txt.innerText = `DB: Connected (${data.total_students_saved || 0})`;
-          pill.title = `Connected to MongoDB database '${data.database}'. Total saved: ${data.total_students_saved || 0}`;
+          txt.innerText = "Engine: Connected";
+          pill.title = `Engine connected. Total student records: ${data.total_students_saved || 0}`;
         } else if (data.status === 'not_configured') {
           pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-mono";
           dot.className = "w-2 h-2 rounded-full bg-amber-500";
-          txt.innerText = "DB: Not Configured";
-          pill.title = data.hint || "Set MONGODB_URI in Render Environment";
+          txt.innerText = "Engine: Standby";
+          pill.title = data.hint || "Engine database standby";
         } else {
           pill.className = "inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-mono";
           dot.className = "w-2 h-2 rounded-full bg-rose-500";
-          txt.innerText = "DB: Disconnected";
+          txt.innerText = "Engine: Disconnected";
           pill.title = `${data.message || 'Connection failed'}. Hint: ${data.hint || ''}`;
         }
       } catch (e) {}
