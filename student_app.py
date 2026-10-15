@@ -123,7 +123,8 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     if not enrollment or not dob:
         raise HTTPException(status_code=400, detail="Both enrollment_no and dob are required.")
 
-    logger.info(f"Incoming scrape request for Enrollment: {enrollment}")
+    clean_dob = re.sub(r'[^0-9]', '', dob)
+    logger.info(f"Incoming scrape request for Enrollment: {enrollment} | DOB: {dob} (Sanitized digits: {clean_dob})")
     logger.info(f"[MEM BEFORE SCRAPE] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
     # Serialize browser execution so only ONE headless Chrome instance runs at a time
