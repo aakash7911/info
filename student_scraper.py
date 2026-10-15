@@ -698,35 +698,35 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             enroll_input.send_keys(Keys.ENTER)
 
         # ---------------------------------------------------------------------
-        # STEP 4: POPUP HANDLE ("YES" CLICK)
+        # STEP 4: POPUP HANDLE ("NO" CLICK)
         # ---------------------------------------------------------------------
-        log("Checking for alerts and notification popups (clicking YES)...")
+        log("Checking for alerts and notification popups (clicking NO)...")
         time.sleep(2)
         for _ in range(12):
             try:
                 alert = driver.switch_to.alert
-                alert.accept()
-                log("Accepted browser alert/confirm popup with YES.")
+                alert.dismiss()
+                log("Dismissed alert popup with NO/Cancel.")
                 break
             except Exception:
                 pass
 
-            yes_btn_selectors = [
-                "//button[translate(normalize-space(text()), 'YES', 'yes')='yes']",
-                "//input[@type='button' and translate(normalize-space(@value), 'YES', 'yes')='yes']",
-                "//a[translate(normalize-space(text()), 'YES', 'yes')='yes']",
-                "//button[contains(text(), 'Yes') or contains(text(), 'YES')]",
-                "//input[contains(@value, 'Yes') or contains(@value, 'YES')]"
+            no_btn_selectors = [
+                "//button[translate(normalize-space(text()), 'NO', 'no')='no']",
+                "//input[@type='button' and translate(normalize-space(@value), 'NO', 'no')='no']",
+                "//a[translate(normalize-space(text()), 'NO', 'no')='no']",
+                "//button[contains(text(), 'No') or contains(text(), 'NO')]",
+                "//input[contains(@value, 'No') or contains(@value, 'NO')]"
             ]
             done = False
-            for y_sel in yes_btn_selectors:
+            for n_sel in no_btn_selectors:
                 try:
-                    yes_btns = driver.find_elements(By.XPATH, y_sel)
-                    for yb in yes_btns:
-                        if yb.is_displayed():
-                            driver.execute_script("arguments[0].click();", yb)
+                    no_btns = driver.find_elements(By.XPATH, n_sel)
+                    for nb in no_btns:
+                        if nb.is_displayed():
+                            driver.execute_script("arguments[0].click();", nb)
                             done = True
-                            log("Clicked 'YES' on student panel redirect popup.")
+                            log("Clicked 'NO' on student panel redirect popup.")
                             break
                     if done:
                         break
@@ -736,13 +736,8 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 break
             time.sleep(0.5)
 
-        time.sleep(3)
-        if len(driver.window_handles) > 1:
-            driver.switch_to.window(driver.window_handles[-1])
-            log(f"Switched window: {driver.current_url}")
-
         log("Waiting for Student Dashboard to load...")
-        time.sleep(5)
+        time.sleep(4)
 
         # Check if login was rejected
         curr_url = driver.current_url.lower()
