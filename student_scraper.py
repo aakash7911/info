@@ -251,279 +251,6 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
     return full_path
 
 
-def extract_pumis_portal(driver, log) -> Tuple[List[Dict[str, str]], str]:
-    """Extracts student details from modern student.pumis.in portal."""
-    all_data = []
-    greeting_name = ""
-
-    # Extract student greeting from Dashboard
-    try:
-        body_text = driver.find_element(By.TAG_NAME, "body").text
-        m_name = re.search(r'Welcome,\s*([A-Za-z\s]+)!', body_text)
-        if m_name:
-            greeting_name = m_name.group(1).strip()
-            all_data.append({
-                "Section": "Personal Information",
-                "Field Name": "Student Name",
-                "Value": greeting_name
-            })
-            log(f"Extracted student name from Dashboard greeting: {greeting_name}")
-    except Exception:
-        pass
-
-    # Navigate to Profile
-    log("Navigating to https://student.pumis.in/Profile...")
-    driver.get("https://student.pumis.in/Profile")
-    time.sleep(3.5)
-
-    try:
-        WebDriverWait(driver, 8).until(EC.presence_of_element_located((By.CLASS_NAME, "MuiTabPanel-root")))
-    except Exception:
-        time.sleep(2)
-
-    p_body = driver.find_element(By.TAG_NAME, "body").text
-    p_lines = [l.strip() for l in p_body.splitlines() if l.strip()]
-
-    current_section = "Personal Information"
-    skip_exact = {"dashboard", "profile", "search", "view", "edit", "logout", "home"}
-
-    i = 0
-    while i < len(p_lines) - 1:
-        line = p_lines[i]
-        line_lower = line.lower()
-        if line_lower in skip_exact or line.startswith("http") or len(line) > 50:
-            i += 1
-            continue
-        if line in ["Personal Details", "Basic Details"]:
-            current_section = "Personal Information"
-            i += 1
-            continue
-        elif line in ["Admission Details", "Academic Details"]:
-            current_section = "Admission Information"
-            i += 1
-            continue
-        elif line in ["Contact Information", "Address Details"]:
-            current_section = "Contact Information"
-            i += 1
-            continue
-        elif line in ["Parent/Guardian Details", "Parents Information"]:
-            current_section = "Parents Information"
-            i += 1
-            continue
-        elif line in ["Identification Information", "Identity Documents"]:
-            current_section = "Identity Information"
-            i += 1
-            continue
-        elif line in ["Campus Service Details", "Campus Services"]:
-            current_section = "Campus Services"
-            i += 1
-            continue
-
-        val = p_lines[i + 1]
-        if not line.startswith("·") and val != line:
-            if not any(sw in val.lower() for sw in ["personal details", "admission details", "contact information"]):
-                all_data.append({
-                    "Section": current_section,
-                    "Field Name": line,
-                    "Value": val
-                })
-                i += 2
-                continue
-        i += 1
-
-    log(f"Extracted {len(all_data)} fields from modern Student Portal (pumis.in)")
-    return all_data, greeting_name
-
-
-def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
-    """Extracts student details from classic ums.paruluniversity.ac.in portal."""
-    all_sections_data = []
-
-    log("Opening Student Profile page on classic UMS...")
-    profile_links = [
-        "//a[contains(@class, 'user-profile') or contains(@class, 'dropdown-toggle')]",
-        "//a[translate(normalize-space(text()), 'PROFILE', 'profile')='profile']",
-        "//a[contains(@href, 'Profile') or contains(@href, 'StudentDetail')]",
-        "//span[contains(text(), 'Profile')]/.."
-    ]
-    for plink in profile_links:
-        try:
-            p_elem = driver.find_element(By.XPATH, plink)
-            if p_elem.is_displayed():
-                driver.execute_script("arguments[0].click();", p_elem)
-                time.sleep(1.2)
-        except Exception:
-            continue
-
-    try:
-        my_prof = driver.find_element(By.XPATH, "//a[contains(text(), 'Profile') or contains(@href, 'Profile')]")
-        driver.execute_script("arguments[0].click();", my_prof)
-        time.sleep(3.5)
-    except Exception:
-        pass
-
-    sections_workflow = [
-        {"name": "Personal Information", "keywords": ["personal", "basic"]},
-        {"name": "Admission Information", "keywords": ["admission", "program"]},
-        {"name": "Contact Information", "keywords": ["contact", "address"]},
-        {"name": "Parents Information", "keywords": ["parent", "father", "mother"]},
-        {"name": "Education Qualification", "keywords": ["education", "qualification 2", "qualification"]}
-    ]
-
-    def extract_from_active_tab():
-        records = []
-        seen = set()
-
-        pane = None
-        try:
-            pane = driver.find_element(By.XPATH, "//div[contains(@class, 'tab-pane') and (contains(@class, 'active') or contains(@class, 'in'))]")
-        except Exception:
-            try:
-                pane = driver.find_element(By.XPATH, "//div[contains(@class, 'tab-content')]")
-            except Exception:
-                pane = driver.find_element(By.TAG_NAME, "body")
-
-        # 1. Inputs / Selects / Textareas (Form values)
-        form_elements = pane.find_elements(By.XPATH, ".//input | .//select | .//textarea")
-        for fe in form_elements:
-            try:
-                val = fe.get_attribute("value") or ""
-                val = val.strip()
-                if not val or val in ["-", "--", "null", "None"]:
-                    continue
-
-                label_text = ""
-                elem_id = fe.get_attribute("id") or ""
-                if elem_id:
-                    try:
-                        lbl = pane.find_element(By.XPATH, f".//label[@for='{elem_id}']")
-                        label_text = lbl.text.strip()
-                    except Exception:
-                        pass
-
-                if not label_text:
-                    label_text = fe.get_attribute("name") or elem_id
-
-                if label_text and val:
-                    records.append((label_text, val))
-            except Exception:
-                continue
-
-        # 2. Table row key-value pairs
-        tables = pane.find_elements(By.XPATH, ".//table")
-        for tbl in tables:
-            try:
-                rows = tbl.find_elements(By.XPATH, ".//tr")
-                for r in rows:
-                    cols = r.find_elements(By.XPATH, ".//td | .//th")
-                    if len(cols) == 2:
-                        k = cols[0].text.strip().replace(":", "").strip()
-                        v = cols[1].text.strip()
-                        if k and v:
-                            records.append((k, v))
-                    elif len(cols) >= 4:
-                        k1 = cols[0].text.strip().replace(":", "").strip()
-                        v1 = cols[1].text.strip()
-                        k2 = cols[2].text.strip().replace(":", "").strip()
-                        v2 = cols[3].text.strip()
-                        if k1 and v1:
-                            records.append((k1, v1))
-                        if k2 and v2:
-                            records.append((k2, v2))
-            except Exception:
-                continue
-
-        # 3. Label-to-Span / Col pairs (Bootstrap grid)
-        label_spans = pane.find_elements(By.XPATH, ".//label")
-        for lbl in label_spans:
-            try:
-                k = lbl.text.strip().replace(":", "").strip()
-                if not k or len(k) > 40:
-                    continue
-                try:
-                    val_el = lbl.find_element(By.XPATH, "./following-sibling::*[1]")
-                    v = val_el.text.strip() or val_el.get_attribute("value") or ""
-                    if v:
-                        records.append((k, v))
-                except Exception:
-                    pass
-            except Exception:
-                continue
-
-        # 4. Text line-by-line fallback
-        raw_text = pane.text
-        lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            if ":" in line and not line.startswith("http"):
-                parts = line.split(":", 1)
-                k = parts[0].strip()
-                v = parts[1].strip()
-                if not v and (i + 1) < len(lines):
-                    next_l = lines[i + 1]
-                    if ":" not in next_l:
-                        v = next_l
-                        i += 1
-                if k and v:
-                    records.append((k, v))
-            i += 1
-
-        # Cleaning & Sanitization
-        cleaned = []
-        for k, v in records:
-            k_clean = k.strip().replace("\n", " ").replace(":", "").strip()
-            v_clean = v.strip().replace("\n", " ")
-
-            if not v_clean or v_clean in ["-", "--", "N/A", "NA", "null", "None", ":"]:
-                continue
-
-            if any(fw in k_clean.lower() for fw in ["fee", "fees", "collected", "installment", "amount"]):
-                continue
-
-            combo = f"{k_clean.lower()}::{v_clean.lower()}"
-            if combo not in seen:
-                seen.add(combo)
-                cleaned.append((k_clean, v_clean))
-
-        return cleaned
-
-    for sec in sections_workflow:
-        sec_name = sec["name"]
-        keywords = sec["keywords"]
-        log(f"Extracting section: {sec_name}...")
-
-        all_tabs = driver.find_elements(
-            By.XPATH,
-            "//a[@data-toggle='tab' or @role='tab'] | //ul[contains(@class, 'nav-tabs')]//a | //div[contains(@class, 'accordion')]//a | //div[contains(@class, 'card-header')]//a | //li[contains(@class, 'tab')]//a"
-        )
-
-        for t in all_tabs:
-            try:
-                t_txt = t.text.strip().lower()
-                if any(kw in t_txt for kw in keywords):
-                    if "fee" in t_txt:
-                        continue
-                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", t)
-                    driver.execute_script("arguments[0].click();", t)
-                    time.sleep(2.0)
-                    break
-            except Exception:
-                continue
-
-        items = extract_from_active_tab()
-        log(f"Extracted {len(items)} fields for {sec_name}")
-
-        for field_name, field_val in items:
-            all_sections_data.append({
-                "Section": sec_name,
-                "Field Name": field_name,
-                "Value": field_val
-            })
-
-    return all_sections_data
-
-
 def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log_cb=None) -> Dict[str, Any]:
     """
     Executes the complete headless scraping pipeline for University UMS.
@@ -588,13 +315,9 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 continue
 
         # ---------------------------------------------------------------------
-        # STEP 2: ENROLLMENT & DOB FILLING (Sanitized to DDMMYYYY digits)
+        # STEP 2: ENROLLMENT & DOB FILLING
         # ---------------------------------------------------------------------
-        # Parul University UMS strictly expects 8 digits DDMMYYYY for student birthdate password
-        clean_dob = re.sub(r'[^0-9]', '', dob)
-        pwd_to_send = clean_dob if len(clean_dob) == 8 else dob
-        log(f"Entering enrollment number: {enrollment_no} and password/DOB: {pwd_to_send} (length {len(pwd_to_send)})...")
-
+        log("Entering enrollment number and date of birth...")
         enroll_input = wait.until(EC.visibility_of_element_located((
             By.XPATH, "//input[contains(@id, 'txtEnrollment') or contains(@id, 'txtUsername') or contains(@placeholder, 'Enrollment') or @type='text'][1]"
         )))
@@ -602,13 +325,16 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         enroll_input.send_keys(enrollment_no)
         time.sleep(0.8)
 
+        clean_dob = re.sub(r'[^0-9]', '', dob)
+        dob_to_send = clean_dob if len(clean_dob) == 8 else dob
+
         # Fill password / DOB directly or fallback via TAB
         pwd_filled = False
         try:
             pwd_input = driver.find_element(By.XPATH, "//input[contains(@id, 'txtPassword') or contains(@id, 'txtDob') or @type='password']")
             if pwd_input.is_displayed():
                 pwd_input.clear()
-                pwd_input.send_keys(pwd_to_send)
+                pwd_input.send_keys(dob_to_send)
                 pwd_filled = True
         except Exception:
             pass
@@ -616,7 +342,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         if not pwd_filled:
             enroll_input.send_keys(Keys.TAB)
             time.sleep(0.5)
-            driver.switch_to.active_element.send_keys(pwd_to_send)
+            driver.switch_to.active_element.send_keys(dob_to_send)
         time.sleep(0.8)
 
         # ---------------------------------------------------------------------
@@ -646,54 +372,239 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             enroll_input.send_keys(Keys.ENTER)
 
         # ---------------------------------------------------------------------
-        # STEP 4: POPUP & REDIRECT HANDLING (Redirect to New Student Panel / Alerts)
+        # STEP 4: POPUP HANDLE ("NO" CLICK)
         # ---------------------------------------------------------------------
         log("Checking for alerts and notification popups...")
         time.sleep(2)
-        for _ in range(8):
+        for _ in range(12):
             try:
                 alert = driver.switch_to.alert
-                log(f"Dismissed alert: {alert.text}")
                 alert.dismiss()
                 break
             except Exception:
                 pass
 
-            # Detect and click "Yes" on "Do you want to redirect to new student panel?"
-            try:
-                yes_btns = driver.find_elements(By.XPATH, "//button[contains(text(), 'Yes')] | //a[contains(text(), 'Yes')]")
-                for yb in yes_btns:
-                    if yb.is_displayed():
-                        log("Detected 'Redirect to new student panel' prompt. Clicking 'Yes'...")
-                        driver.execute_script("arguments[0].click();", yb)
-                        time.sleep(3)
+            no_btn_selectors = [
+                "//button[translate(normalize-space(text()), 'NO', 'no')='no']",
+                "//input[@type='button' and translate(normalize-space(@value), 'NO', 'no')='no']",
+                "//a[translate(normalize-space(text()), 'NO', 'no')='no']",
+                "//button[contains(text(), 'No') or contains(text(), 'NO')]"
+            ]
+            done = False
+            for n_sel in no_btn_selectors:
+                try:
+                    no_btns = driver.find_elements(By.XPATH, n_sel)
+                    for nb in no_btns:
+                        if nb.is_displayed():
+                            driver.execute_script("arguments[0].click();", nb)
+                            done = True
+                            break
+                    if done:
                         break
-            except Exception:
-                pass
+                except Exception:
+                    continue
+            if done:
+                break
             time.sleep(0.5)
 
         log("Waiting for Student Dashboard to load...")
-        time.sleep(4)
+        time.sleep(5)
 
         # Check if login was rejected
         curr_url = driver.current_url.lower()
         page_source = driver.page_source.lower()
-        if "invalid" in page_source and ("password" in page_source or "username" in page_source or "enrollment" in page_source):
+        if "invalid" in page_source and ("password" in page_source or "enrollment" in page_source):
             raise ValueError("Authentication Failed: UMS portal reported invalid Enrollment Number or DOB.")
 
         # ---------------------------------------------------------------------
-        # STEP 5: NAVIGATE TO PROFILE PAGE & HARVEST DATA
+        # STEP 5: NAVIGATE TO PROFILE PAGE
         # ---------------------------------------------------------------------
-        greeting_name = ""
-        is_pumis = "pumis.in" in driver.current_url.lower()
+        log("Opening Student Profile page...")
+        profile_links = [
+            "//a[contains(@class, 'user-profile') or contains(@class, 'dropdown-toggle')]",
+            "//a[translate(normalize-space(text()), 'PROFILE', 'profile')='profile']",
+            "//a[contains(@href, 'Profile') or contains(@href, 'StudentDetail')]",
+            "//span[contains(text(), 'Profile')]/.."
+        ]
+        for plink in profile_links:
+            try:
+                p_elem = driver.find_element(By.XPATH, plink)
+                if p_elem.is_displayed():
+                    driver.execute_script("arguments[0].click();", p_elem)
+                    time.sleep(1.2)
+            except Exception:
+                continue
 
-        if is_pumis:
-            pumis_data, greeting_name = extract_pumis_portal(driver, log)
-            all_sections_data.extend(pumis_data)
-        else:
-            classic_data = extract_classic_ums_portal(driver, wait, log)
-            all_sections_data.extend(classic_data)
+        try:
+            my_prof = driver.find_element(By.XPATH, "//a[contains(text(), 'Profile') or contains(@href, 'Profile')]")
+            driver.execute_script("arguments[0].click();", my_prof)
+            time.sleep(3.5)
+        except Exception:
+            pass
 
+        # ---------------------------------------------------------------------
+        # STEP 6: SECTION-BY-SECTION PRECISE EXTRACTION
+        # ---------------------------------------------------------------------
+        sections_workflow = [
+            {"name": "Personal Information", "keywords": ["personal", "basic"]},
+            {"name": "Admission Information", "keywords": ["admission", "program"]},
+            {"name": "Contact Information", "keywords": ["contact", "address"]},
+            {"name": "Parents Information", "keywords": ["parent", "father", "mother"]},
+            {"name": "Education Qualification", "keywords": ["education", "qualification 2", "qualification"]}
+        ]
+
+        def extract_from_active_tab():
+            records = []
+            seen = set()
+
+            pane = None
+            try:
+                pane = driver.find_element(By.XPATH, "//div[contains(@class, 'tab-pane') and (contains(@class, 'active') or contains(@class, 'in'))]")
+            except Exception:
+                try:
+                    pane = driver.find_element(By.XPATH, "//div[contains(@class, 'tab-content')]")
+                except Exception:
+                    pane = driver.find_element(By.TAG_NAME, "body")
+
+            # 1. Inputs / Selects / Textareas (Form values)
+            form_elements = pane.find_elements(By.XPATH, ".//input | .//select | .//textarea")
+            for fe in form_elements:
+                try:
+                    val = fe.get_attribute("value") or ""
+                    val = val.strip()
+                    if not val or val in ["-", "--", "null", "None"]:
+                        continue
+
+                    label_text = ""
+                    elem_id = fe.get_attribute("id") or ""
+                    if elem_id:
+                        try:
+                            lbl = pane.find_element(By.XPATH, f".//label[@for='{elem_id}']")
+                            label_text = lbl.text.strip()
+                        except Exception:
+                            pass
+
+                    if not label_text:
+                        try:
+                            lbl = fe.find_element(By.XPATH, "./preceding::label[1]")
+                            label_text = lbl.text.strip()
+                        except Exception:
+                            pass
+
+                    if label_text and len(label_text) < 50:
+                        records.append((label_text, val))
+                except Exception:
+                    continue
+
+            # 2. Table Rows
+            rows = pane.find_elements(By.XPATH, ".//tr")
+            for r in rows:
+                try:
+                    cols = r.find_elements(By.XPATH, "./td | ./th")
+                    if len(cols) == 2:
+                        k = cols[0].text.strip().replace(":", "").strip()
+                        v = cols[1].text.strip()
+                        if k and v:
+                            records.append((k, v))
+                    elif len(cols) >= 4:
+                        k1 = cols[0].text.strip().replace(":", "").strip()
+                        v1 = cols[1].text.strip()
+                        k2 = cols[2].text.strip().replace(":", "").strip()
+                        v2 = cols[3].text.strip()
+                        if k1 and v1:
+                            records.append((k1, v1))
+                        if k2 and v2:
+                            records.append((k2, v2))
+                except Exception:
+                    continue
+
+            # 3. Label-to-Span / Col pairs (Bootstrap grid)
+            label_spans = pane.find_elements(By.XPATH, ".//label")
+            for lbl in label_spans:
+                try:
+                    k = lbl.text.strip().replace(":", "").strip()
+                    if not k or len(k) > 40:
+                        continue
+                    try:
+                        val_el = lbl.find_element(By.XPATH, "./following-sibling::*[1]")
+                        v = val_el.text.strip() or val_el.get_attribute("value") or ""
+                        if v:
+                            records.append((k, v))
+                    except Exception:
+                        pass
+                except Exception:
+                    continue
+
+            # 4. Text line-by-line fallback
+            raw_text = pane.text
+            lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+            i = 0
+            while i < len(lines):
+                line = lines[i]
+                if ":" in line and not line.startswith("http"):
+                    parts = line.split(":", 1)
+                    k = parts[0].strip()
+                    v = parts[1].strip()
+                    if not v and (i + 1) < len(lines):
+                        next_l = lines[i + 1]
+                        if ":" not in next_l:
+                            v = next_l
+                            i += 1
+                    if k and v:
+                        records.append((k, v))
+                i += 1
+
+            # Cleaning & Sanitization
+            cleaned = []
+            for k, v in records:
+                k_clean = k.strip().replace("\n", " ").replace(":", "").strip()
+                v_clean = v.strip().replace("\n", " ")
+
+                if not v_clean or v_clean in ["-", "--", "N/A", "NA", "null", "None", ":"]:
+                    continue
+
+                if any(fw in k_clean.lower() for fw in ["fee", "fees", "collected", "installment", "amount"]):
+                    continue
+
+                combo = f"{k_clean.lower()}::{v_clean.lower()}"
+                if combo not in seen:
+                    seen.add(combo)
+                    cleaned.append((k_clean, v_clean))
+
+            return cleaned
+
+        for sec in sections_workflow:
+            sec_name = sec["name"]
+            keywords = sec["keywords"]
+            log(f"Extracting section: {sec_name}...")
+
+            all_tabs = driver.find_elements(
+                By.XPATH,
+                "//a[@data-toggle='tab' or @role='tab'] | //ul[contains(@class, 'nav-tabs')]//a | //div[contains(@class, 'accordion')]//a | //div[contains(@class, 'card-header')]//a | //li[contains(@class, 'tab')]//a"
+            )
+
+            for t in all_tabs:
+                try:
+                    t_txt = t.text.strip().lower()
+                    if any(kw in t_txt for kw in keywords):
+                        if "fee" in t_txt:
+                            continue
+                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", t)
+                        driver.execute_script("arguments[0].click();", t)
+                        time.sleep(2.0)
+                        break
+                except Exception:
+                    continue
+
+            items = extract_from_active_tab()
+            log(f"Extracted {len(items)} fields for {sec_name}")
+
+            for field_name, field_val in items:
+                all_sections_data.append({
+                    "Section": sec_name,
+                    "Field Name": field_name,
+                    "Value": field_val
+                })
 
         if not all_sections_data:
             raise RuntimeError("No records found in student profile tabs. Please check credentials or portal layout.")
@@ -709,7 +620,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         summary = {
             "enrollment_no": enrollment_no,
             "dob": dob,
-            "student_name": greeting_name if greeting_name else "N/A",
+            "student_name": "N/A",
             "course": "N/A",
             "institute": "N/A",
             "contact_mobile": "N/A",
