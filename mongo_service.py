@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
@@ -13,6 +14,8 @@ _mongo_client: Optional[MongoClient] = None
 _db_name: Optional[str] = None
 _last_mongo_error: Optional[str] = None
 _last_mongo_hint: Optional[str] = None
+_last_attempt_time: float = 0.0
+_RETRY_INTERVAL: float = 15.0  # seconds cooldown between failed connection attempts
 
 
 def get_mongo_uri() -> Optional[str]:
@@ -26,7 +29,7 @@ def get_mongo_uri() -> Optional[str]:
 
 def get_mongo_db():
     """Initializes and returns cached MongoDB database connection with detailed error diagnostics."""
-    global _mongo_client, _db_name, _last_mongo_error, _last_mongo_hint
+    global _mongo_client, _db_name, _last_mongo_error, _last_mongo_hint, _last_attempt_time
     uri = get_mongo_uri()
     if not uri:
         _last_mongo_error = "MONGODB_URI environment variable is not set."
@@ -41,13 +44,19 @@ def get_mongo_db():
         return None
 
     if _mongo_client is None:
+        now = time.time()
+        # If previous attempt failed, enforce cooldown to avoid repeated blocking
+        if _last_mongo_error and (now - _last_attempt_time < _RETRY_INTERVAL):
+            return None
+        _last_attempt_time = now
+
         try:
             logger.info("Attempting MongoDB connection...")
             client = MongoClient(
                 uri,
-                serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=5000,
-                socketTimeoutMS=10000,
+                serverSelectionTimeoutMS=3000,
+                connectTimeoutMS=3000,
+                socketTimeoutMS=5000,
                 appname="university_student_portal"
             )
             # Test ping to verify authentication & network reachability
@@ -212,8 +221,7 @@ def check_mongo_health() -> Dict[str, Any]:
                 "message": _last_mongo_error or "Could not connect to MongoDB instance.",
                 "hint": _last_mongo_hint or "Check Network Access (0.0.0.0/0) and credentials in MongoDB Atlas."
             }
-        db.command("ping")
-        count = db.students.count_documents({})
+        count = db.students.estimated_document_count()
         return {
             "configured": True,
             "status": "connected",

@@ -126,24 +126,35 @@ class ScrapeRequest(BaseModel):
     dob: str = Field(..., description="Student Date of Birth (DD/MM/YYYY or DD-MM-YYYY)")
     headless: bool = Field(default=True, description="Run invisible headless browser (default True)")
 
+async def verify_mongo_in_background():
+    """Asynchronously verifies MongoDB in background so the port opens immediately."""
+    await asyncio.sleep(1.0)
+    try:
+        print("\n" + "=" * 65, flush=True)
+        print("🚀 [STARTUP] Verifying MongoDB Connection Status...", flush=True)
+        health = await asyncio.to_thread(check_mongo_health)
+        status = health.get("status")
+        if status == "connected":
+            print(f"✅ [MONGODB SUCCESS] Connected to cluster successfully!", flush=True)
+            print(f"   Database: {health.get('database')}", flush=True)
+            print(f"   Total Saved Students: {health.get('total_students_saved')}", flush=True)
+        elif status == "not_configured":
+            print("⚠️ [MONGODB WARNING] MONGODB_URI is not set in Render Environment.", flush=True)
+            print("   Set MONGODB_URI to automatically save student profiles.", flush=True)
+        else:
+            print(f"❌ [MONGODB ERROR] Connection failed: {health.get('message')}", flush=True)
+            if health.get("hint"):
+                print(f"👉 [ACTION REQUIRED] {health.get('hint')}", flush=True)
+        print("=" * 65 + "\n", flush=True)
+    except Exception as exc:
+        logger.warning(f"Background MongoDB health check error: {exc}")
+
 @app.on_event("startup")
 async def startup_event():
-    print("\n" + "=" * 65, flush=True)
-    print("🚀 [STARTUP] Verifying MongoDB Connection Status...", flush=True)
-    health = check_mongo_health()
-    status = health.get("status")
-    if status == "connected":
-        print(f"✅ [MONGODB SUCCESS] Connected to cluster successfully!", flush=True)
-        print(f"   Database: {health.get('database')}", flush=True)
-        print(f"   Total Saved Students: {health.get('total_students_saved')}", flush=True)
-    elif status == "not_configured":
-        print("⚠️ [MONGODB WARNING] MONGODB_URI is not set in Render Environment.", flush=True)
-        print("   Set MONGODB_URI to automatically save student profiles.", flush=True)
-    else:
-        print(f"❌ [MONGODB ERROR] Connection failed: {health.get('message')}", flush=True)
-        if health.get("hint"):
-            print(f"👉 [ACTION REQUIRED] {health.get('hint')}", flush=True)
-    print("=" * 65 + "\n", flush=True)
+    """Fast, non-blocking startup: spawns background DB check and immediately lets server bind port."""
+    logger.info("Application starting up. Scheduling background services...")
+    asyncio.create_task(verify_mongo_in_background())
+    logger.info("Startup complete. Ready to bind port.")
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_scanner_ui():
@@ -165,7 +176,7 @@ async def serve_scanner_ui():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint for Render / monitoring with live memory stats."""
-    db_health = check_mongo_health()
+    db_health = await asyncio.to_thread(check_mongo_health)
     current_mem_mb = get_current_memory_mb()
     return {
         "status": "healthy",
@@ -182,7 +193,7 @@ async def health_check():
 @app.get("/api/db/status")
 async def db_status():
     """Returns detailed status of MongoDB connection for admin/mongosh verification."""
-    return check_mongo_health()
+    return await asyncio.to_thread(check_mongo_health)
 
 @app.post("/api/scrape")
 async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
