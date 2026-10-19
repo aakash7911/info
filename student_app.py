@@ -149,12 +149,61 @@ async def verify_mongo_in_background():
     except Exception as exc:
         logger.warning(f"Background MongoDB health check error: {exc}")
 
+async def keep_alive_background_worker():
+    """
+    Periodic keep-alive task that pings the application's external URL
+    every 10 minutes (600s) to prevent Render free-tier from idling/sleeping (15-min timeout).
+    """
+    # Wait 45 seconds after startup before first ping
+    await asyncio.sleep(45)
+    
+    while True:
+        target_url = (
+            os.getenv("KEEP_ALIVE_URL")
+            or os.getenv("RENDER_EXTERNAL_URL")
+            or (f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}" if os.getenv("RENDER_EXTERNAL_HOSTNAME") else None)
+        )
+        
+        if target_url:
+            ping_url = target_url.rstrip("/") + "/api/ping"
+            try:
+                def _do_ping():
+                    import urllib.request
+                    req = urllib.request.Request(
+                        ping_url,
+                        headers={"User-Agent": "Render-KeepAlive-Worker/1.0"}
+                    )
+                    with urllib.request.urlopen(req, timeout=12) as response:
+                        return response.getcode()
+
+                status_code = await asyncio.to_thread(_do_ping)
+                logger.info(f"⚡ [KEEP-ALIVE] Heartbeat pinged {ping_url} - Status: {status_code} (Prevented sleep mode)")
+            except Exception as e:
+                logger.warning(f"⚠️ [KEEP-ALIVE] Ping to {ping_url} failed: {e}")
+        else:
+            logger.info("ℹ️ [KEEP-ALIVE] Standby: Set KEEP_ALIVE_URL in Render Environment to auto-ping.")
+
+        # Sleep for 10 minutes (600s) - Render free tier sleeps after 15 minutes (900s)
+        await asyncio.sleep(600)
+
 @app.on_event("startup")
 async def startup_event():
-    """Fast, non-blocking startup: spawns background DB check and immediately lets server bind port."""
+    """Fast, non-blocking startup: spawns background DB check and keep-alive ping worker."""
     logger.info("Application starting up. Scheduling background services...")
     asyncio.create_task(verify_mongo_in_background())
+    asyncio.create_task(keep_alive_background_worker())
     logger.info("Startup complete. Ready to bind port.")
+
+@app.get("/api/ping")
+@app.get("/ping")
+async def ping():
+    """Ultra-lightweight ping endpoint for keep-alive monitoring and preventing sleep mode."""
+    return {
+        "status": "awake",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "service": "student-dossier-gateway",
+        "rss_mb": get_current_memory_mb()
+    }
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_scanner_ui():

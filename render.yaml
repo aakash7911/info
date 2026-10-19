@@ -13,4 +13,6 @@ services:
         value: /tmp/.selenium
       - key: MONGODB_URI
         sync: false
+      - key: KEEP_ALIVE_URL
+        sync: false
 

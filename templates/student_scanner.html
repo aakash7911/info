@@ -1723,6 +1723,11 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
+
+    // Keep-Alive Heartbeat: pings /api/ping every 4 minutes while browser tab is open
+    setInterval(() => {
+      fetch('/api/ping').catch(() => {});
+    }, 4 * 60 * 1000);
   </script>
 </body>
 </html>
