@@ -9,13 +9,13 @@ from pymongo import MongoClient
 
 logger = logging.getLogger("mongo_service")
 
-# Global cached client & error diagnostics
+
 _mongo_client: Optional[MongoClient] = None
 _db_name: Optional[str] = None
 _last_mongo_error: Optional[str] = None
 _last_mongo_hint: Optional[str] = None
 _last_attempt_time: float = 0.0
-_RETRY_INTERVAL: float = 15.0  # seconds cooldown between failed connection attempts
+_RETRY_INTERVAL: float = 15.0 
 
 
 def get_mongo_uri() -> Optional[str]:
@@ -36,7 +36,6 @@ def get_mongo_db():
         _last_mongo_hint = "Add MONGODB_URI in Render dashboard -> Environment."
         return None
 
-    # Detect unreplaced password placeholders
     if "<db_password>" in uri or "<password>" in uri:
         _last_mongo_error = "Found unreplaced '<db_password>' placeholder in connection string."
         _last_mongo_hint = "In Render Environment, replace '<db_password>' with your actual database user password."
@@ -45,7 +44,7 @@ def get_mongo_db():
 
     if _mongo_client is None:
         now = time.time()
-        # If previous attempt failed, enforce cooldown to avoid repeated blocking
+      
         if _last_mongo_error and (now - _last_attempt_time < _RETRY_INTERVAL):
             return None
         _last_attempt_time = now
@@ -59,7 +58,7 @@ def get_mongo_db():
                 socketTimeoutMS=5000,
                 appname="university_student_portal"
             )
-            # Test ping to verify authentication & network reachability
+           
             client.admin.command("ping")
             
             db_name = os.getenv("MONGODB_DB_NAME") or "student_dossier_db"
@@ -118,7 +117,7 @@ def save_student_dossier(
         filename = result.get("filename", "")
         now = datetime.now(timezone.utc)
 
-        # 1. Update / Upsert into 'students' collection
+      
         student_doc = {
             "enrollment_no": enrollment,
             "dob": dob,
@@ -143,7 +142,7 @@ def save_student_dossier(
             upsert=True
         )
 
-        # 2. Append event to 'scrape_history' collection for audit trail
+       
         history_doc = {
             "enrollment_no": enrollment,
             "dob": dob,
@@ -185,7 +184,7 @@ def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -
         if not doc:
             return None
 
-        # Verify DOB if provided
+       
         if dob:
             clean_search_dob = re.sub(r'[^0-9]', '', dob)
             clean_db_dob = re.sub(r'[^0-9]', '', doc.get("dob", ""))
