@@ -18,7 +18,7 @@ from mongo_service import save_student_dossier, check_mongo_health, find_cached_
 logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-# Global concurrency lock to guarantee strictly ONE Chromium instance at a time (protects 512MB RAM limit)
+
 SCRAPE_LOCK = asyncio.Lock()
 
 def get_current_memory_mb() -> float:
@@ -48,7 +48,7 @@ def build_cached_response(cached_doc: dict, enrollment: str, dob: str, request: 
         "domicile": cached_doc.get("domicile") or "Unknown"
     }
 
-    # If file missing from ephemeral disk, regenerate Excel directly from cached sections
+   
     if not os.path.exists(file_path) and sections:
         all_sections_data = []
         for sec_name, field_list in sections.items():
@@ -65,7 +65,7 @@ def build_cached_response(cached_doc: dict, enrollment: str, dob: str, request: 
             except Exception as ex:
                 logger.warning(f"Could not regenerate cached Excel file: {ex}")
 
-    # Update access timestamp in MongoDB
+   
     client_ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "unknown")
     try:
@@ -110,7 +110,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -154,7 +154,7 @@ async def keep_alive_background_worker():
     Periodic keep-alive task that pings the application's external URL
     every 10 minutes (600s) to prevent Render free-tier from idling/sleeping (15-min timeout).
     """
-    # Wait 45 seconds after startup before first ping
+    
     await asyncio.sleep(45)
     
     while True:
@@ -183,7 +183,7 @@ async def keep_alive_background_worker():
         else:
             logger.info("ℹ️ [KEEP-ALIVE] Standby: Set KEEP_ALIVE_URL in Render Environment to auto-ping.")
 
-        # Sleep for 10 minutes (600s) - Render free tier sleeps after 15 minutes (900s)
+       
         await asyncio.sleep(600)
 
 @app.on_event("startup")
@@ -261,17 +261,13 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     clean_dob = re.sub(r'[^0-9]', '', dob)
     logger.info(f"Incoming dossier request for Enrollment: {enrollment} | DOB: {dob} (Sanitized digits: {clean_dob})")
 
-    # -------------------------------------------------------------
-    # 1. CHECK MONGODB CACHE (FAST PATH - ZERO BROWSER RAM)
-    # -------------------------------------------------------------
+   
     cached_doc = find_cached_student_dossier(enrollment_no=enrollment, dob=dob)
     if cached_doc:
         logger.info(f"Instant cache hit in MongoDB for [{enrollment}]! Skipping browser login entirely.")
         return build_cached_response(cached_doc, enrollment, dob, request)
 
-    # -------------------------------------------------------------
-    # 2. RUN BROWSER EXTRACTION IF NOT YET CACHED
-    # -------------------------------------------------------------
+   
     logger.info(f"[MEM BEFORE SCRAPE] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
     if SCRAPE_LOCK.locked():
@@ -279,9 +275,9 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
 
     result = None
     try:
-        # Serialize browser execution so strictly ONE headless Chrome instance runs at a time
+       
         async with SCRAPE_LOCK:
-            # Double-check cache inside lock in case a previous queued request just saved it
+           
             cached_doc_inner = find_cached_student_dossier(enrollment_no=enrollment, dob=dob)
             if cached_doc_inner:
                 logger.info(f"Double-check cache hit in lock for [{enrollment}]! Skipping browser.")
@@ -315,7 +311,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
                     }
                 )
     finally:
-        # Aggressively reclaim memory after every browser run
+        
         cleanup_browser_processes()
         gc.collect()
         logger.info(f"[MEM AFTER SCRAPE & GC] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
@@ -325,7 +321,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
         logger.error(f"Scraping failed: {error_msg}")
         return JSONResponse(status_code=422, content=result or {"success": False, "error": error_msg})
 
-    # Persist student data & audit log into MongoDB
+   
     client_ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "unknown")
     saved_to_db = save_student_dossier(result=result, client_ip=client_ip, user_agent=user_agent)
@@ -336,7 +332,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
 @app.get("/api/download/{filename}")
 async def download_dossier_excel(filename: str):
     """Securely downloads the generated Excel dossier."""
-    # Sanitize to prevent path traversal
+    
     safe_filename = os.path.basename(filename)
     file_path = os.path.join(DOSSIERS_DIR, safe_filename)
 
