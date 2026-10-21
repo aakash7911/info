@@ -45,6 +45,9 @@ def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
     if headless:
         options.add_argument("--headless=new")
 
+    # Fast DOM loading - don't hang on slow university tracking beacons or fonts
+    options.page_load_strategy = "eager"
+
    
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -398,14 +401,15 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
             p_elem = driver.find_element(By.XPATH, plink)
             if p_elem.is_displayed():
                 driver.execute_script("arguments[0].click();", p_elem)
-                time.sleep(1.2)
+                time.sleep(0.8)
+                break
         except Exception:
             continue
 
     try:
-        my_prof = driver.find_element(By.XPATH, "//a[contains(text(), 'Profile') or contains(@href, 'Profile')]")
+        my_prof = driver.find_element(By.XPATH, "//a[contains(text(), 'Profile') or contains(@href, 'Profile') or contains(@href, 'StudentDetail')]")
         driver.execute_script("arguments[0].click();", my_prof)
-        time.sleep(3.5)
+        time.sleep(1.5)
     except Exception:
         pass
 
@@ -689,8 +693,8 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
 
         
         log("Checking for alerts and notification popups (clicking NO)...")
-        time.sleep(1.0)
-        for _ in range(12):
+        time.sleep(0.5)
+        for _ in range(4):
             try:
                 alert = driver.switch_to.alert
                 alert.dismiss()
@@ -725,7 +729,7 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             time.sleep(0.3)
 
         log("Waiting for Student Dashboard to load...")
-        time.sleep(2.5)
+        time.sleep(1.5)
 
         
         curr_url = driver.current_url.lower()

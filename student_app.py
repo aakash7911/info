@@ -12,7 +12,7 @@ from typing import Optional
 
 from datetime import datetime, timezone
 
-from student_scraper import scrape_student_data, generate_styled_excel, DOSSIERS_DIR, cleanup_browser_processes
+from student_scraper import scrape_student_data, generate_styled_excel, DOSSIERS_DIR
 from mongo_service import save_student_dossier, check_mongo_health, find_cached_student_dossier, get_mongo_db
 
 logger = logging.getLogger("student_app")
@@ -292,10 +292,10 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
                         dob=dob,
                         headless=payload.headless
                     ),
-                    timeout=75.0
+                    timeout=180.0
                 )
             except asyncio.TimeoutError:
-                logger.error(f"Scrape timed out after 75s for {enrollment}.")
+                logger.error(f"Scrape timed out after 180s for {enrollment}.")
                 return JSONResponse(
                     status_code=504,
                     content={
@@ -311,8 +311,6 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
                     }
                 )
     finally:
-        
-        cleanup_browser_processes()
         gc.collect()
         logger.info(f"[MEM AFTER SCRAPE & GC] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
 
