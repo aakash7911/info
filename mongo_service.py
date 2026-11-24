@@ -67,6 +67,10 @@ def get_mongo_db():
             _last_mongo_error = None
             _last_mongo_hint = None
             logger.info(f"MongoDB successfully connected. Active database: {db_name}")
+            try:
+                purge_blocked_students(client[db_name])
+            except Exception:
+                pass
         except Exception as e:
             err_str = str(e)
             _last_mongo_error = err_str
@@ -86,6 +90,26 @@ def get_mongo_db():
 
     db_name = _db_name or os.getenv("MONGODB_DB_NAME") or "student_dossier_db"
     return _mongo_client[db_name]
+
+
+BLOCKED_ENROLLMENT_CLEAN = "26UG033233"
+
+
+def purge_blocked_students(db=None) -> int:
+    """Removes blacklisted test enrollment records (26UG033233) from MongoDB."""
+    try:
+        if db is None:
+            db = get_mongo_db()
+        if db is None:
+            return 0
+        del_res = db.students.delete_many({"enrollment_no": {"$regex": f"^{BLOCKED_ENROLLMENT_CLEAN}$", "$options": "i"}})
+        db.scrape_history.delete_many({"enrollment_no": {"$regex": f"^{BLOCKED_ENROLLMENT_CLEAN}$", "$options": "i"}})
+        if del_res.deleted_count > 0:
+            logger.info(f"Purged {del_res.deleted_count} blocked record(s) for {BLOCKED_ENROLLMENT_CLEAN} from MongoDB.")
+        return del_res.deleted_count
+    except Exception as e:
+        logger.warning(f"Error purging blocked student from MongoDB: {e}")
+        return 0
 
 
 def save_student_dossier(
@@ -110,6 +134,11 @@ def save_student_dossier(
             return False
 
         enrollment = result.get("enrollment_no", "").strip().upper()
+        clean_enroll = re.sub(r'[^0-9A-Za-z]', '', enrollment).upper()
+        if clean_enroll == BLOCKED_ENROLLMENT_CLEAN:
+            logger.warning(f"Blocked enrollment {clean_enroll} will not be saved to MongoDB.")
+            purge_blocked_students(db)
+            return False
         dob = result.get("dob", "").strip()
         summary = result.get("summary", {})
         sections = result.get("sections", {})
@@ -177,6 +206,12 @@ def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -
     try:
         db = get_mongo_db()
         if db is None:
+            return None
+
+        clean_enroll = re.sub(r'[^0-9A-Za-z]', '', enrollment_no).upper()
+        if clean_enroll == BLOCKED_ENROLLMENT_CLEAN:
+            logger.warning(f"Blocked enrollment {clean_enroll} cache query denied. Purging cache.")
+            purge_blocked_students(db)
             return None
 
         enrollment = enrollment_no.strip().upper()

@@ -13,10 +13,40 @@ from typing import Optional
 from datetime import datetime, timezone
 
 from student_scraper import scrape_student_data, generate_styled_excel, DOSSIERS_DIR
-from mongo_service import save_student_dossier, check_mongo_health, find_cached_student_dossier, get_mongo_db
+from mongo_service import (
+    save_student_dossier,
+    check_mongo_health,
+    find_cached_student_dossier,
+    get_mongo_db,
+    purge_blocked_students,
+    BLOCKED_ENROLLMENT_CLEAN
+)
 
 logger = logging.getLogger("student_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+
+def normalize_dob(dob_str: str) -> str:
+    """
+    Normalizes diverse date of birth inputs (e.g. 12-05-2003, 12/05/2003, 12-May-2003, 12052003)
+    into an 8-digit DDMMYYYY string suitable for UMS portal authentication.
+    """
+    if not dob_str:
+        return ""
+    s = dob_str.strip().lower()
+    month_map = {
+        'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+        'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+        'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    }
+    for m_name, m_num in month_map.items():
+        if m_name in s:
+            s = re.sub(rf'\b{m_name}[a-z]*\b', m_num, s)
+            break
+    digits = re.sub(r'[^0-9]', '', s)
+    if len(digits) == 8:
+        return digits
+    return dob_str.strip()
 
 
 SCRAPE_LOCK = asyncio.Lock()
@@ -132,6 +162,8 @@ async def verify_mongo_in_background():
     try:
         print("\n" + "=" * 65, flush=True)
         print("🚀 [STARTUP] Verifying MongoDB Connection Status...", flush=True)
+        # Purge any old test records for blocked enrollment
+        await asyncio.to_thread(purge_blocked_students)
         health = await asyncio.to_thread(check_mongo_health)
         status = health.get("status")
         if status == "connected":
@@ -258,14 +290,26 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
     if not enrollment or not dob:
         raise HTTPException(status_code=400, detail="Both enrollment_no and dob are required.")
 
-    clean_dob = re.sub(r'[^0-9]', '', dob)
-    logger.info(f"Incoming dossier request for Enrollment: {enrollment} | DOB: {dob} (Sanitized digits: {clean_dob})")
+    clean_enroll = re.sub(r'[^0-9A-Za-z]', '', enrollment).upper()
+    if clean_enroll == BLOCKED_ENROLLMENT_CLEAN:
+        logger.warning(f"BLOCKED ACCESS: Enrollment [{enrollment}] attempted scrape. Denying with 403 Forbidden.")
+        await asyncio.to_thread(purge_blocked_students)
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "error": f"FUCK YOU. Access permanently denied: Enrollment {BLOCKED_ENROLLMENT_CLEAN} is banned on this system."
+            }
+        )
+
+    clean_dob = normalize_dob(dob)
+    logger.info(f"Incoming dossier request for Enrollment: {enrollment} | DOB: {dob} (Sanitized: {clean_dob})")
 
    
-    cached_doc = find_cached_student_dossier(enrollment_no=enrollment, dob=dob)
+    cached_doc = find_cached_student_dossier(enrollment_no=enrollment, dob=clean_dob)
     if cached_doc:
         logger.info(f"Instant cache hit in MongoDB for [{enrollment}]! Skipping browser login entirely.")
-        return build_cached_response(cached_doc, enrollment, dob, request)
+        return build_cached_response(cached_doc, enrollment, clean_dob, request)
 
    
     logger.info(f"[MEM BEFORE SCRAPE] Current RSS: {get_current_memory_mb():.2f} MB / 512 MB")
@@ -278,10 +322,10 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
        
         async with SCRAPE_LOCK:
            
-            cached_doc_inner = find_cached_student_dossier(enrollment_no=enrollment, dob=dob)
+            cached_doc_inner = find_cached_student_dossier(enrollment_no=enrollment, dob=clean_dob)
             if cached_doc_inner:
                 logger.info(f"Double-check cache hit in lock for [{enrollment}]! Skipping browser.")
-                return build_cached_response(cached_doc_inner, enrollment, dob, request)
+                return build_cached_response(cached_doc_inner, enrollment, clean_dob, request)
 
             logger.info(f"Acquired scrape lock for {enrollment}. Launching Chrome in thread pool...")
             try:
@@ -289,7 +333,7 @@ async def trigger_student_scrape(payload: ScrapeRequest, request: Request):
                     asyncio.to_thread(
                         scrape_student_data,
                         enrollment_no=enrollment,
-                        dob=dob,
+                        dob=clean_dob,
                         headless=payload.headless
                     ),
                     timeout=180.0
