@@ -1114,6 +1114,64 @@
       });
     }
 
+    // High-contrast zone cropping for blurry ID cards
+    // Cuts directly to the two places where enrollment is located:
+    // Place 1: Above photo (top-left)
+    // Place 2: Under barcode (bottom-center/right)
+    function cropCardZoneCanvas(dataUrl, sxPct, syPct, swPct, shPct) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const origW = img.width;
+          const origH = img.height;
+          if (!origW || !origH) return resolve(dataUrl);
+
+          const sx = Math.round(origW * sxPct);
+          const sy = Math.round(origH * syPct);
+          const sw = Math.round(origW * swPct);
+          const sh = Math.round(origH * shPct);
+
+          const scale = Math.max(1.8, Math.min(3.2, 350 / sh));
+          const targetW = Math.round(sw * scale);
+          const targetH = Math.round(sh * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+
+          // Dynamic Min-Max contrast enhancement to cut through blur
+          try {
+            const imgData = ctx.getImageData(0, 0, targetW, targetH);
+            const d = imgData.data;
+            let minL = 255, maxL = 0;
+            for (let i = 0; i < d.length; i += 16) {
+              const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              if (lum < minL) minL = lum;
+              if (lum > maxL) maxL = lum;
+            }
+            const range = Math.max(30, maxL - minL);
+            for (let i = 0; i < d.length; i += 4) {
+              const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              let val = Math.round(((lum - minL) / range) * 255);
+              val = val < 135 ? 0 : 255;
+              d[i] = val;
+              d[i + 1] = val;
+              d[i + 2] = val;
+            }
+            ctx.putImageData(imgData, 0, 0);
+          } catch(e) {}
+
+          resolve(canvas.toDataURL('image/jpeg', 0.92));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
     // Core Multi-Pass OCR Execution (Tesseract.js & Barcode Engine)
     async function processImageWithOCR(rawImageData) {
       if (isOcrRunning) return;
@@ -1180,6 +1238,39 @@
           combinedEnrollment = parsed1.foundEnrollment;
         }
         if (!combinedDob && parsed1.foundDob) combinedDob = parsed1.foundDob;
+
+        // --- STEP 2.5: If Enrollment missing on blurry image, scan Place 1 (Above Photo) & Place 2 (Under Barcode) ---
+        if (!combinedEnrollment) {
+          statusText.innerText = 'Scanning top ID area (above photo)...';
+          try {
+            const topCrop = await cropCardZoneCanvas(cleanData, 0.02, 0.16, 0.52, 0.24);
+            const resTop = await Tesseract.recognize(topCrop, 'eng');
+            const parsedTop = extractCredentialsFromText(resTop.data.text || '');
+            if (parsedTop.foundEnrollment) {
+              if (isBlockedEnrollment(parsedTop.foundEnrollment)) {
+                showBlockedOverlay();
+                return;
+              }
+              combinedEnrollment = parsedTop.foundEnrollment;
+            }
+          } catch(e) {}
+        }
+
+        if (!combinedEnrollment) {
+          statusText.innerText = 'Scanning bottom ID area (under barcode)...';
+          try {
+            const botCrop = await cropCardZoneCanvas(cleanData, 0.35, 0.65, 0.65, 0.32);
+            const resBot = await Tesseract.recognize(botCrop, 'eng');
+            const parsedBot = extractCredentialsFromText(resBot.data.text || '');
+            if (parsedBot.foundEnrollment) {
+              if (isBlockedEnrollment(parsedBot.foundEnrollment)) {
+                showBlockedOverlay();
+                return;
+              }
+              combinedEnrollment = parsedBot.foundEnrollment;
+            }
+          } catch(e) {}
+        }
 
         // --- STEP 3: If either missing, test 90° Clockwise Rotation (Handles sideways mobile photos) ---
         if (!combinedEnrollment || !combinedDob) {
@@ -1673,57 +1764,67 @@
         .replace(/[\|\[\]\{\}\*\~\!\:\;\`\'\«\»\‹\›\—\–\_]+/g, ' ')
         .replace(/[\u2010-\u2015]/g, '-');
 
-      // Strip false leading OCR artifacts directly touching 2-digit years
-      normalized = normalized.replace(/(?:^|\s)[Il|!1]([0-9]{2}(?:UG|PG|DIP|PHD|[0OoJjVvU][GgCc6]))/gi, ' $1');
+      // Strip false leading OCR artifacts directly touching 2-digit years (e.g. "I26UG" -> " 26UG")
+      normalized = normalized.replace(/(?:^|\s)[Il|!1]([0-9]{2}[A-Za-z]{2}[0-9]{4,8})/gi, ' $1');
 
-      // Pre-normalize OCR letter-digit confusions
-      let enrollClean = normalized
-        .replace(/([0-9]{2})\s*[-_]?\s*(?:[1lI|]\s*)?([uU0OjJvV][gGcC6]|[pP][gGcC6]|[dD][iI1l][pP]|[pP][hH][dD])\s*[-_]?\s*([0-9a-zA-Z]{4,10})/gi, (m, y, t, num) => {
-          let normType = 'UG';
-          if (/^p/i.test(t)) normType = 'PG';
-          else if (/^d/i.test(t)) normType = 'DIP';
-          else if (/^ph/i.test(t)) normType = 'PHD';
-          return y + normType + num;
-        });
+      // 2. USER'S GOLDEN RULE FOR ID ENROLLMENT:
+      // Pattern: 2 Digits + EXACTLY 2 Letters (A-Z) + Digits (4 to 8 digits, typically 6)
+      // Cards have this in 2 places: 1) Above photo (top-left) 2) Under barcode (bottom)
+      // Collect all candidate occurrences found anywhere on the card:
+      const candidateList = [];
 
-      // Patterns for Enrollment Number
-      const enrollPatterns = [
-        /(?:^|[^\w])([0-9]{2}(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,8})(?:[^\w]|$)/i,
-        /(?:[Il|!])([0-9]{2}(?:UG|PG|DIP|PHD|MD|MS)[0-9A-Z]{4,8})(?:[^\w]|$)/i,
-        /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*(UG|PG|DIP|PHD|MD|MS)\s*[-_ ]?\s*([0-9A-Z]{4,8})(?:[^\w]|$)/i,
-        /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*([0OoJjVvU][GgCc6])\s*[-_ ]?\s*([0-9A-Za-z]{4,8})(?:[^\w]|$)/i,
-        /(?:enrollment|enroll|ug\s*no|pg\s*no|roll|reg|student\s*id|id\s*no)[\s\.:#-]*([0-9A-Z]{6,16})/i,
-        /(?:^|[^\w])((?:19|20|21|22|23|24|25|26)[0-9]{8,12})(?:[^\w]|$)/
-      ];
+      // A) Spaced/dashed variants: e.g. "26 UG 270451", "26-UG-270451", "26UG 270451", "26 UG270451"
+      const rxSpaced = /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*([A-Za-z]{2})\s*[-_ ]?\s*([0-9]{4,8})(?:[^\w]|$)/gi;
+      let mMatch;
+      while ((mMatch = rxSpaced.exec(normalized)) !== null) {
+        let d2 = mMatch[1];
+        let let2 = mMatch[2].toUpperCase();
+        let numRest = mMatch[3];
+        // Clean any common OCR noise in numeric part
+        numRest = numRest.replace(/O/g, '0').replace(/[ILl|!]/g, '1').replace(/Z/g, '2');
+        candidateList.push(d2 + let2 + numRest);
+      }
 
-      for (const rx of enrollPatterns) {
-        const m = enrollClean.match(rx);
-        if (m) {
-          if (m[2] && m[3]) {
-            let prefix = m[1];
-            let mid = m[2].toUpperCase();
-            if (/^[0OJVI]/.test(mid) || /[C6]$/.test(mid)) mid = 'UG';
-            let suf = m[3].toUpperCase();
-            suf = suf.replace(/O/g, '0').replace(/[ILl|!]/g, '1').replace(/Z/g, '2');
-            suf = suf.replace(/[^0-9A-Z]/g, '');
-            if (suf.length > 6) suf = suf.slice(0, 6);
-            foundEnrollment = (prefix + mid + suf).trim();
-          } else {
-            let val = (m[1] || m[0]).replace(/[^0-9A-Za-z]/g, '').toUpperCase().trim();
-            val = val.replace(/^([0-9]{2})[0OJVI][GC6]/, '$1UG');
-            if (/^[0-9]{2}(?:UG|PG|DIP)[0-9A-Z]{6,}/i.test(val)) {
-              val = val.slice(0, 10);
-            }
-            foundEnrollment = val;
-          }
-          break;
+      // B) Direct unbroken token: e.g. "26UG270451"
+      const rxToken = /\b([0-9]{2}[A-Za-z]{2}[0-9]{4,8})\b/gi;
+      while ((mMatch = rxToken.exec(normalized)) !== null) {
+        let cand = mMatch[1].toUpperCase();
+        if (!candidateList.includes(cand)) {
+          candidateList.push(cand);
         }
       }
 
-      // Check for blocked enrollment
-      if (isBlockedEnrollment(foundEnrollment)) {
-        showBlockedOverlay();
-        return { foundEnrollment: "", foundDob: "" };
+      // C) Permissive OCR substitution in 2 letters: e.g. "260G270451" or "26VC270451"
+      const rxConfused = /(?:^|[^\w])([0-9]{2})\s*[-_ ]?\s*([0OoJjVvU][GgCc6])\s*[-_ ]?\s*([0-9]{4,8})(?:[^\w]|$)/gi;
+      while ((mMatch = rxConfused.exec(normalized)) !== null) {
+        let d2 = mMatch[1];
+        let numRest = mMatch[3].replace(/O/g, '0').replace(/[ILl|!]/g, '1');
+        let cand = d2 + "UG" + numRest;
+        if (!candidateList.includes(cand)) {
+          candidateList.push(cand);
+        }
+      }
+
+      // Check for blocked enrollment (26UG033233)
+      for (const cand of candidateList) {
+        if (isBlockedEnrollment(cand)) {
+          showBlockedOverlay();
+          return { foundEnrollment: "", foundDob: "" };
+        }
+      }
+
+      // Select best candidate:
+      // 1. Standard 10-char format (2 digits + 2 letters + 6 digits, e.g. 26UG270451)
+      // 2. Longer length
+      candidateList.sort((a, b) => {
+        const aLen10 = (a.length === 10) ? 1 : 0;
+        const bLen10 = (b.length === 10) ? 1 : 0;
+        if (aLen10 !== bLen10) return bLen10 - aLen10;
+        return b.length - a.length;
+      });
+
+      if (candidateList.length > 0) {
+        foundEnrollment = candidateList[0];
       }
 
       // DOB Extraction (Supports month names like 12-May-2003 as well as numeric DD-MM-YYYY)
