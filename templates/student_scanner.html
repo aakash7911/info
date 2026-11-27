@@ -344,19 +344,24 @@
                   </button>
                 </div>
 
-                <div class="grid grid-cols-3 gap-2">
-                  <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-1.5 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs transition flex items-center justify-center space-x-1.5">
-                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span class="truncate">Change</span>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button type="button" onclick="retakeWithCamera()" class="w-full py-2.5 px-1 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-xs transition flex items-center justify-center space-x-1">
+                    <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                    <span class="truncate">Retake</span>
                   </button>
 
-                  <button type="button" onclick="rotateCurrentUploadedImage(90)" class="w-full py-2.5 px-1.5 rounded-xl bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 text-xs font-semibold text-amber-700 shadow-xs transition flex items-center justify-center space-x-1.5" title="Rotate image 90 degrees if card is sideways">
-                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <button type="button" onclick="triggerFilePicker()" class="w-full py-2.5 px-1 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-xs transition flex items-center justify-center space-x-1">
+                    <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="truncate">Upload</span>
+                  </button>
+
+                  <button type="button" onclick="rotateCurrentUploadedImage(90)" class="w-full py-2.5 px-1 rounded-xl bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 text-[11px] font-semibold text-amber-700 shadow-xs transition flex items-center justify-center space-x-1" title="Rotate image 90 degrees if card is sideways">
+                    <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     <span class="truncate">Rotate ↻</span>
                   </button>
 
-                  <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-1.5 rounded-xl bg-white hover:bg-emerald-50 active:bg-emerald-100 border border-emerald-200 text-xs font-semibold text-emerald-700 shadow-xs transition flex items-center justify-center space-x-1.5">
-                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <button type="button" onclick="reprocessCurrentUploadedImage()" class="w-full py-2.5 px-1 rounded-xl bg-white hover:bg-emerald-50 active:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-700 shadow-xs transition flex items-center justify-center space-x-1">
+                    <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span class="truncate">Re-scan</span>
                   </button>
                 </div>
@@ -765,6 +770,12 @@
       await startCamera();
     }
 
+    function retakeWithCamera() {
+      clearUploadedFile();
+      switchScanTab('camera');
+      startCamera();
+    }
+
     async function captureAndOCR() {
       const video = document.getElementById('videoFeed');
       if (!video) return;
@@ -805,21 +816,24 @@
         dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       }
 
-      const overlay = document.getElementById('scannerOverlay');
-      if (overlay) {
-        overlay.classList.add('bg-white/40');
-        setTimeout(() => overlay.classList.remove('bg-white/40'), 150);
+      stopCamera();
+
+      if (dataUrl) {
+        currentUploadedDataUrl = dataUrl;
+        switchScanTab('upload');
+        const dropzone = document.getElementById('dropzone');
+        const previewBox = document.getElementById('uploadPreviewBox');
+        const previewImg = document.getElementById('uploadPreviewImg');
+        if (dropzone) dropzone.classList.add('hidden');
+        if (previewBox) previewBox.classList.remove('hidden');
+        if (previewImg) previewImg.src = dataUrl;
+
+        await processImageWithOCR(dataUrl);
       }
 
-      try {
-        if (dataUrl) {
-          await processImageWithOCR(dataUrl);
-        }
-      } finally {
-        if (btnSnap) {
-          btnSnap.disabled = false;
-          btnSnap.classList.remove('opacity-70');
-        }
+      if (btnSnap) {
+        btnSnap.disabled = false;
+        btnSnap.classList.remove('opacity-70');
       }
     }
 
