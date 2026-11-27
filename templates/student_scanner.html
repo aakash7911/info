@@ -99,10 +99,7 @@
           <span id="dbStatusText" class="text-slate-700 font-medium">Engine: Connecting...</span>
         </div>
 
-        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Engine: READY</span>
-        </div>
+
       </div>
     </div>
   </header>
@@ -745,8 +742,7 @@
         document.getElementById('btnSnap').classList.remove('hidden');
         document.getElementById('btnFlipCamera').classList.remove('hidden');
       } catch (err) {
-        alert("Camera access error: " + err.message + "
-You can also use the HD Camera or Upload option.");
+        alert("Camera access error: " + err.message + "\nYou can also use the HD Camera or Upload option.");
       }
     }
 
