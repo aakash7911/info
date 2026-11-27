@@ -9,26 +9,21 @@ from pymongo import MongoClient
 
 logger = logging.getLogger("mongo_service")
 
-
 _mongo_client: Optional[MongoClient] = None
 _db_name: Optional[str] = None
 _last_mongo_error: Optional[str] = None
 _last_mongo_hint: Optional[str] = None
 _last_attempt_time: float = 0.0
-_RETRY_INTERVAL: float = 15.0 
-
+_RETRY_INTERVAL: float = 15.0
 
 def get_mongo_uri() -> Optional[str]:
-    """Retrieves MongoDB connection URI from environment variables."""
     return (
         os.getenv("MONGODB_URI")
         or os.getenv("MONGO_URI")
         or os.getenv("MONGODB_URL")
     )
 
-
 def get_mongo_db():
-    """Initializes and returns cached MongoDB database connection with detailed error diagnostics."""
     global _mongo_client, _db_name, _last_mongo_error, _last_mongo_hint, _last_attempt_time
     uri = get_mongo_uri()
     if not uri:
@@ -44,7 +39,6 @@ def get_mongo_db():
 
     if _mongo_client is None:
         now = time.time()
-      
         if _last_mongo_error and (now - _last_attempt_time < _RETRY_INTERVAL):
             return None
         _last_attempt_time = now
@@ -58,7 +52,6 @@ def get_mongo_db():
                 socketTimeoutMS=5000,
                 appname="university_student_portal"
             )
-           
             client.admin.command("ping")
             
             db_name = os.getenv("MONGODB_DB_NAME") or "student_dossier_db"
@@ -66,7 +59,7 @@ def get_mongo_db():
             _mongo_client = client
             _last_mongo_error = None
             _last_mongo_hint = None
-            logger.info(f"MongoDB successfully connected. Active database: {db_name}")
+            logger.info(f"MongoDB connected. Database: {db_name}")
             try:
                 purge_blocked_students(client[db_name])
             except Exception:
@@ -91,12 +84,9 @@ def get_mongo_db():
     db_name = _db_name or os.getenv("MONGODB_DB_NAME") or "student_dossier_db"
     return _mongo_client[db_name]
 
-
 BLOCKED_ENROLLMENT_CLEAN = "26UG033233"
 
-
 def purge_blocked_students(db=None) -> int:
-    """Removes blacklisted test enrollment records (26UG033233) from MongoDB."""
     try:
         if db is None:
             db = get_mongo_db()
@@ -105,38 +95,30 @@ def purge_blocked_students(db=None) -> int:
         del_res = db.students.delete_many({"enrollment_no": {"$regex": f"^{BLOCKED_ENROLLMENT_CLEAN}$", "$options": "i"}})
         db.scrape_history.delete_many({"enrollment_no": {"$regex": f"^{BLOCKED_ENROLLMENT_CLEAN}$", "$options": "i"}})
         if del_res.deleted_count > 0:
-            logger.info(f"Purged {del_res.deleted_count} blocked record(s) for {BLOCKED_ENROLLMENT_CLEAN} from MongoDB.")
+            logger.info(f"Purged {del_res.deleted_count} blocked record(s) for {BLOCKED_ENROLLMENT_CLEAN}")
         return del_res.deleted_count
     except Exception as e:
-        logger.warning(f"Error purging blocked student from MongoDB: {e}")
+        logger.warning(f"Error purging blocked student: {e}")
         return 0
-
 
 def save_student_dossier(
     result: Dict[str, Any],
     client_ip: Optional[str] = None,
     user_agent: Optional[str] = None
 ) -> bool:
-    """
-    Saves the extracted student dossier to MongoDB collections:
-    1. 'students' - Upserts the complete student profile with all academic sections.
-    2. 'scrape_history' - Records an immutable audit log of every extraction event.
-    """
     uri = get_mongo_uri()
     if not uri:
-        logger.debug("MONGODB_URI not configured in environment. Skipping database save.")
         return False
 
     try:
         db = get_mongo_db()
         if db is None:
-            logger.warning("MongoDB is currently unreachable. Dossier not saved to database.")
             return False
 
         enrollment = result.get("enrollment_no", "").strip().upper()
         clean_enroll = re.sub(r'[^0-9A-Za-z]', '', enrollment).upper()
         if clean_enroll == BLOCKED_ENROLLMENT_CLEAN:
-            logger.warning(f"Blocked enrollment {clean_enroll} will not be saved to MongoDB.")
+            logger.warning(f"Blocked enrollment {clean_enroll} not saved.")
             purge_blocked_students(db)
             return False
         dob = result.get("dob", "").strip()
@@ -146,7 +128,6 @@ def save_student_dossier(
         filename = result.get("filename", "")
         now = datetime.now(timezone.utc)
 
-      
         student_doc = {
             "enrollment_no": enrollment,
             "dob": dob,
@@ -171,7 +152,6 @@ def save_student_dossier(
             upsert=True
         )
 
-       
         history_doc = {
             "enrollment_no": enrollment,
             "dob": dob,
@@ -186,19 +166,14 @@ def save_student_dossier(
         }
         db.scrape_history.insert_one(history_doc)
 
-        logger.info(f"Student record [{enrollment}] successfully saved/updated in MongoDB.")
+        logger.info(f"Student record [{enrollment}] saved.")
         return True
 
     except Exception as e:
-        logger.error(f"Failed to save student dossier to MongoDB: {e}")
+        logger.error(f"Failed to save student dossier: {e}")
         return False
 
-
 def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """
-    Checks if student record already exists in MongoDB 'students' collection.
-    If found and DOB matches (or if sanitized digits match), returns the cached student profile.
-    """
     uri = get_mongo_uri()
     if not uri:
         return None
@@ -210,7 +185,6 @@ def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -
 
         clean_enroll = re.sub(r'[^0-9A-Za-z]', '', enrollment_no).upper()
         if clean_enroll == BLOCKED_ENROLLMENT_CLEAN:
-            logger.warning(f"Blocked enrollment {clean_enroll} cache query denied. Purging cache.")
             purge_blocked_students(db)
             return None
 
@@ -219,24 +193,20 @@ def find_cached_student_dossier(enrollment_no: str, dob: Optional[str] = None) -
         if not doc:
             return None
 
-       
         if dob:
             clean_search_dob = re.sub(r'[^0-9]', '', dob)
             clean_db_dob = re.sub(r'[^0-9]', '', doc.get("dob", ""))
             if clean_search_dob and clean_db_dob and clean_search_dob != clean_db_dob:
-                logger.info(f"Student [{enrollment}] found in DB, but search DOB ({clean_search_dob}) != DB DOB ({clean_db_dob}). Skipping cache.")
                 return None
 
-        logger.info(f"Instant cache hit: Student [{enrollment}] already exists in MongoDB! Serving from cache.")
+        logger.info(f"Cache hit for student [{enrollment}]")
         return doc
 
     except Exception as e:
-        logger.warning(f"Error checking student cache in MongoDB: {e}")
+        logger.warning(f"Error checking cache: {e}")
         return None
 
-
 def check_mongo_health() -> Dict[str, Any]:
-    """Returns the current MongoDB connection health with actionable diagnostic hints."""
     global _last_mongo_error, _last_mongo_hint
     uri = get_mongo_uri()
     if not uri:
@@ -261,7 +231,7 @@ def check_mongo_health() -> Dict[str, Any]:
             "status": "connected",
             "database": db.name,
             "total_students_saved": count,
-            "message": "MongoDB is actively connected and saving dossiers."
+            "message": "MongoDB is actively connected."
         }
     except Exception as e:
         return {

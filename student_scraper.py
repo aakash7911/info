@@ -21,7 +21,6 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-
 os.environ.setdefault("SELENIUM_CACHE_DIR", "/tmp/.selenium")
 os.makedirs("/tmp/.selenium", exist_ok=True)
 
@@ -32,7 +31,6 @@ DOSSIERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "generat
 os.makedirs(DOSSIERS_DIR, exist_ok=True)
 
 def cleanup_browser_processes():
-    """Aggressively terminates any lingering chromium/chromedriver processes to reclaim RAM."""
     try:
         import subprocess
         subprocess.run(["pkill", "-9", "-f", "chromium|chromedriver"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -40,15 +38,12 @@ def cleanup_browser_processes():
         pass
 
 def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
-    """Configures Chrome options with extreme memory optimization (<512MB RAM) and anti-bot flags."""
     options = webdriver.ChromeOptions()
     if headless:
         options.add_argument("--headless=new")
 
-    # Fast DOM loading - don't hang on slow university tracking beacons or fonts
     options.page_load_strategy = "eager"
 
-   
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -57,17 +52,12 @@ def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
     options.add_argument("--no-zygote")
     options.add_argument("--window-size=960,600")
 
-   
     options.add_argument("--js-flags=--max-old-space-size=128")
-
-    
     options.add_argument("--blink-settings=imagesEnabled=false")
-
     options.add_argument("--disk-cache-size=1")
     options.add_argument("--media-cache-size=1")
     options.add_argument("--aggressive-cache-discard")
 
- 
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-default-apps")
     options.add_argument("--disable-sync")
@@ -87,7 +77,6 @@ def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 
-   
     for bin_path in [
         "/usr/bin/chromium",
         "/usr/bin/chromium-browser",
@@ -96,49 +85,37 @@ def get_chrome_options(headless: bool = True) -> webdriver.ChromeOptions:
     ]:
         if os.path.exists(bin_path):
             options.binary_location = bin_path
-            logger.info(f"Using system browser binary at: {bin_path}")
             break
 
     return options
 
 def create_driver(headless: bool = True) -> webdriver.Chrome:
-    """Creates a Selenium Chrome driver with automatic fallback from system drivers to ChromeDriverManager."""
     options = get_chrome_options(headless=headless)
 
-   
     for driver_path in ["/usr/bin/chromedriver", "/usr/local/bin/chromedriver"]:
         if os.path.exists(driver_path):
             try:
-                logger.info(f"Attempting system chromedriver at {driver_path}")
                 service = Service(executable_path=driver_path)
                 driver = webdriver.Chrome(service=service, options=options)
                 driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 return driver
-            except Exception as e:
-                logger.warning(f"Failed using system chromedriver: {e}")
+            except Exception:
+                pass
 
-   
     if ChromeDriverManager is not None:
         try:
-            logger.info("Installing/verifying chromedriver via ChromeDriverManager...")
             service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             return driver
-        except Exception as e:
-            logger.warning(f"ChromeDriverManager failed: {e}. Falling back to native driver.")
+        except Exception:
+            pass
 
-    logger.info("Initializing native Selenium Chrome driver...")
     driver = webdriver.Chrome(options=options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
-
 def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no: str) -> str:
-    """
-    Generates a beautifully formatted Excel dossier matching the user's exact specification.
-    Returns the absolute path to the generated file.
-    """
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Student Details"
@@ -168,7 +145,6 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
     align_center = Alignment(horizontal="center", vertical="center")
     align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
-   
     ws.merge_cells("B2:D2")
     title_cell = ws["B2"]
     title_cell.value = f"STUDENT PROFILE & ACADEMIC DOSSIER — {enrollment_no}"
@@ -177,7 +153,6 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
     title_cell.alignment = align_center
     ws.row_dimensions[2].height = 40
 
-    
     col_headers = ["S.No.", "Field / Information", "Details / Value"]
     ws.row_dimensions[4].height = 25
     for col_idx, h_text in enumerate(col_headers, start=2):
@@ -248,16 +223,12 @@ def generate_styled_excel(all_sections_data: List[Dict[str, str]], enrollment_no
     del wb
     import gc
     gc.collect()
-    logger.info(f"Excel dossier saved at: {full_path}")
     return full_path
 
-
 def extract_pumis_portal(driver, log) -> Tuple[List[Dict[str, str]], str]:
-    """Extracts student details from modern student.pumis.in portal."""
     all_data = []
     greeting_name = ""
 
-    
     try:
         body_text = driver.find_element(By.TAG_NAME, "body").text
         m_name = re.search(r'Welcome,\s*([A-Za-z\s]+)!', body_text)
@@ -268,20 +239,15 @@ def extract_pumis_portal(driver, log) -> Tuple[List[Dict[str, str]], str]:
                 "Field Name": "Student Name",
                 "Value": greeting_name
             })
-            log(f"Extracted student name from Dashboard greeting: {greeting_name}")
     except Exception:
         pass
 
-   
-    log("Navigating to https://student.pumis.in/Profile...")
     driver.get("https://student.pumis.in/Profile")
     time.sleep(3.5)
 
-  
     try:
         tab_buttons = driver.find_elements(By.XPATH, "//button[@role='tab'] | //div[@role='tablist']//button")
         if tab_buttons:
-            log(f"Found {len(tab_buttons)} profile tabs on new portal. Iterating...")
             for tb in tab_buttons:
                 try:
                     driver.execute_script("arguments[0].click();", tb)
@@ -378,18 +344,14 @@ def extract_pumis_portal(driver, log) -> Tuple[List[Dict[str, str]], str]:
                     i += 2
                     continue
             i += 1
-    except Exception as exc:
-        log(f"Profile text parsing note: {exc}")
+    except Exception:
+        pass
 
-    log(f"Extracted {len(all_data)} fields from modern Student Portal (pumis.in)")
     return all_data, greeting_name
 
-
 def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
-    """Extracts student details from classic ums.paruluniversity.ac.in portal."""
     all_sections_data = []
 
-    log("Opening Student Profile page...")
     profile_links = [
         "//a[contains(@class, 'user-profile') or contains(@class, 'dropdown-toggle')]",
         "//a[translate(normalize-space(text()), 'PROFILE', 'profile')='profile']",
@@ -434,7 +396,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
             except Exception:
                 pane = driver.find_element(By.TAG_NAME, "body")
 
-       
         form_elements = pane.find_elements(By.XPATH, ".//input | .//select | .//textarea")
         for fe in form_elements:
             try:
@@ -464,7 +425,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
             except Exception:
                 continue
 
-        
         rows = pane.find_elements(By.XPATH, ".//tr")
         for r in rows:
             try:
@@ -486,7 +446,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
             except Exception:
                 continue
 
-        
         label_spans = pane.find_elements(By.XPATH, ".//label")
         for lbl in label_spans:
             try:
@@ -503,7 +462,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
             except Exception:
                 continue
 
-       
         raw_text = pane.text
         lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
         i = 0
@@ -522,7 +480,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
                     records.append((k, v))
             i += 1
 
-      
         cleaned = []
         for k, v in records:
             k_clean = k.strip().replace("\n", " ").replace(":", "").strip()
@@ -544,7 +501,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
     for sec in sections_workflow:
         sec_name = sec["name"]
         keywords = sec["keywords"]
-        log(f"Extracting section: {sec_name}...")
 
         all_tabs = driver.find_elements(
             By.XPATH,
@@ -565,7 +521,6 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
                 continue
 
         items = extract_from_active_tab()
-        log(f"Extracted {len(items)} fields for {sec_name}")
 
         for field_name, field_val in items:
             all_sections_data.append({
@@ -576,23 +531,7 @@ def extract_classic_ums_portal(driver, wait, log) -> List[Dict[str, str]]:
 
     return all_sections_data
 
-
 def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log_cb=None) -> Dict[str, Any]:
-    """
-    Executes the complete headless scraping pipeline for University UMS.
-    Returns:
-      {
-        "success": bool,
-        "enrollment_no": str,
-        "dob": str,
-        "excel_path": str,
-        "filename": str,
-        "total_fields": int,
-        "sections": { "Section Name": [{"field": k, "value": v}] },
-        "summary": { "name": ..., "program": ..., ... },
-        "error": Optional[str]
-      }
-    """
     def log(msg: str):
         logger.info(msg)
         if log_cb:
@@ -606,21 +545,16 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
     driver = None
 
     try:
-       
         cleanup_browser_processes()
         import gc
         gc.collect()
 
-        log(f"Initializing invisible browser for {enrollment_no}...")
         driver = create_driver(headless=headless)
         wait = WebDriverWait(driver, 18)
 
-        log("Navigating to UMS portal...")
         driver.get(portal_url)
         time.sleep(1.2)
 
-       
-        log("Switching to Student section...")
         student_selectors = [
             "//input[@id='rblRole_1' or (@type='radio' and contains(@value, 'Student'))]",
             "//label[contains(text(), 'Student')]",
@@ -638,8 +572,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             except Exception:
                 continue
 
-       
-        log("Entering enrollment number and date of birth...")
         enroll_input = wait.until(EC.visibility_of_element_located((
             By.XPATH, "//input[contains(@id, 'txtEnrollment') or contains(@id, 'txtUsername') or contains(@placeholder, 'Enrollment') or @type='text'][1]"
         )))
@@ -650,7 +582,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         clean_dob = re.sub(r'[^0-9]', '', dob)
         dob_to_send = clean_dob if len(clean_dob) == 8 else dob
 
-       
         pwd_filled = False
         try:
             pwd_input = driver.find_element(By.XPATH, "//input[contains(@id, 'txtPassword') or contains(@id, 'txtDob') or @type='password']")
@@ -667,8 +598,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             driver.switch_to.active_element.send_keys(dob_to_send)
         time.sleep(0.4)
 
-        
-        log("Submitting login credentials...")
         login_btn_selectors = [
             "//input[contains(@id, 'btnSubmit') or contains(@id, 'btnLogin')]",
             "//button[contains(@id, 'btnSubmit') or contains(@id, 'btnLogin')]",
@@ -691,14 +620,11 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         if not login_clicked:
             enroll_input.send_keys(Keys.ENTER)
 
-        
-        log("Checking for alerts and notification popups (clicking NO)...")
         time.sleep(0.5)
         for _ in range(4):
             try:
                 alert = driver.switch_to.alert
                 alert.dismiss()
-                log("Dismissed alert popup with NO/Cancel.")
                 break
             except Exception:
                 pass
@@ -718,7 +644,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                         if nb.is_displayed():
                             driver.execute_script("arguments[0].click();", nb)
                             done = True
-                            log("Clicked 'NO' on student panel redirect popup.")
                             break
                     if done:
                         break
@@ -728,37 +653,28 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
                 break
             time.sleep(0.3)
 
-        log("Waiting for Student Dashboard to load...")
         time.sleep(1.5)
 
-        
-        curr_url = driver.current_url.lower()
         page_source = driver.page_source.lower()
         if "invalid" in page_source and ("password" in page_source or "enrollment" in page_source):
             raise ValueError("Authentication Failed: UMS portal reported invalid Enrollment Number or DOB.")
 
-       
         is_pumis = "pumis.in" in driver.current_url.lower()
         greeting_name = ""
 
         if is_pumis:
-            log("Redirected to modern Student Portal (pumis.in). Harvesting profile...")
             pumis_data, greeting_name = extract_pumis_portal(driver, log)
             all_sections_data.extend(pumis_data)
         else:
-            log("On classic UMS portal. Harvesting profile...")
             classic_data = extract_classic_ums_portal(driver, wait, log)
             all_sections_data.extend(classic_data)
 
         if not all_sections_data:
             raise RuntimeError("No records found in student profile tabs. Please check credentials or portal layout.")
 
-        
-        log("Building styled Excel dossier...")
         excel_path = generate_styled_excel(all_sections_data, enrollment_no)
         filename = os.path.basename(excel_path)
 
-       
         summary = {
             "enrollment_no": enrollment_no,
             "dob": dob,
@@ -794,7 +710,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
             elif "state" in f_lower and summary["domicile"] == "N/A":
                 summary["domicile"] = f_val
 
-        log(f"Successfully processed student dossier: {len(all_sections_data)} fields extracted.")
         return {
             "success": True,
             "enrollment_no": enrollment_no,
@@ -826,7 +741,6 @@ def scrape_student_data(enrollment_no: str, dob: str, headless: bool = True, log
         if driver:
             try:
                 driver.quit()
-                logger.info("Closed Chrome driver instance.")
             except Exception:
                 pass
             driver = None
