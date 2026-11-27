@@ -413,64 +413,10 @@
             </div>
 
             
-            <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-3.5">
+            <form id="extractForm" onsubmit="handleStartDossier(event)" class="space-y-4">
               <pre id="rawOcrText" class="hidden"></pre>
-
-              
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
-                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                  <span class="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
-                    <span>Card Credentials</span>
-                  </span>
-                  <span id="fieldStatusTag" class="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-semibold">
-                    Auto-Fill / Editable
-                  </span>
-                </div>
-
-                
-                <div>
-                  <div class="flex items-center justify-between mb-1">
-                    <label for="inputEnrollment" class="text-[11px] font-semibold text-slate-700">
-                      Enrollment No. <span class="text-rose-500">*</span>
-                    </label>
-                    <span id="enrollFoundIndicator" class="text-[10px] font-mono text-slate-400">Waiting for card</span>
-                  </div>
-                  <input 
-                    type="text" 
-                    id="inputEnrollment" 
-                    name="enrollment"
-                    placeholder="e.g. 26PG110387 or 25UG370346" 
-                    autocomplete="off"
-                    autocapitalize="characters"
-                    oninput="handleManualEnrollInput(this.value)"
-                    class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs font-mono uppercase font-semibold text-slate-900 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 transition"
-                  />
-                </div>
-
-                
-                <div>
-                  <div class="flex items-center justify-between mb-1">
-                    <label for="inputDob" class="text-[11px] font-semibold text-slate-700">
-                      Date of Birth (DOB) <span class="text-rose-500">*</span>
-                    </label>
-                    <span id="dobFoundIndicator" class="text-[10px] font-mono text-slate-400">DD-MM-YYYY</span>
-                  </div>
-                  <input 
-                    type="text" 
-                    id="inputDob" 
-                    name="dob"
-                    placeholder="e.g. 12-05-2003 or 12/05/2003" 
-                    autocomplete="off"
-                    oninput="handleManualDobInput(this.value)"
-                    class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs font-mono font-semibold text-slate-900 bg-slate-50/50 focus:bg-white placeholder:text-slate-400 transition"
-                  />
-                </div>
-                
-                <p class="text-[10px] text-slate-500 leading-normal">
-                  Scanned details appear above automatically. You can edit or enter them manually if any field is missing.
-                </p>
-              </div>
+              <input type="hidden" id="inputEnrollment" name="enrollment" value="" />
+              <input type="hidden" id="inputDob" name="dob" value="" />
 
               
               <div id="cardStatusCard" class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2 transition shadow-xs">
@@ -1436,24 +1382,6 @@
       clearUploadedFile();
     }
 
-    function handleManualEnrollInput(val) {
-      if (isBlockedEnrollment(val)) {
-        showBlockedOverlay();
-        return;
-      }
-      const currentDob = document.getElementById('inputDob')?.value || '';
-      updateCredentialState(val, currentDob, true);
-    }
-
-    function handleManualDobInput(val) {
-      const currentEnroll = document.getElementById('inputEnrollment')?.value || '';
-      if (isBlockedEnrollment(currentEnroll)) {
-        showBlockedOverlay();
-        return;
-      }
-      updateCredentialState(currentEnroll, val, true);
-    }
-
     function parseDobString(val) {
       if (!val) return null;
       const s = val.trim();
@@ -1513,12 +1441,9 @@
       return null;
     }
 
-    function updateCredentialState(foundEnrollment, foundDob, fromManual = false) {
+    function updateCredentialState(foundEnrollment, foundDob) {
       const inpEnroll = document.getElementById('inputEnrollment');
       const inpDob = document.getElementById('inputDob');
-
-      const enrollIndicator = document.getElementById('enrollFoundIndicator');
-      const dobIndicator = document.getElementById('dobFoundIndicator');
 
       const badgeCardAuth = document.getElementById('badgeCardAuth');
       const authIconBox = document.getElementById('authStatusIconBox');
@@ -1540,15 +1465,13 @@
       const alertMsg = document.getElementById('scanAlertMessage');
       const alertIcon = document.getElementById('scanAlertIcon');
 
-      if (!fromManual && isBlockedEnrollment(foundEnrollment)) {
+      if (isBlockedEnrollment(foundEnrollment)) {
         showBlockedOverlay();
         return false;
       }
 
-      if (!fromManual) {
-        if (foundEnrollment && inpEnroll) inpEnroll.value = foundEnrollment;
-        if (foundDob && inpDob) inpDob.value = foundDob;
-      }
+      if (foundEnrollment && inpEnroll) inpEnroll.value = foundEnrollment;
+      if (foundDob && inpDob) inpDob.value = foundDob;
 
       const currentEnroll = inpEnroll ? inpEnroll.value.trim().toUpperCase() : '';
       const currentDob = inpDob ? inpDob.value.trim() : '';
@@ -1564,45 +1487,25 @@
       const parsedDob = parseDobString(currentDob);
       const isDobValid = Boolean(parsedDob);
 
-      if (enrollIndicator) {
-        if (isEnrollValid) {
-          enrollIndicator.innerText = "✓ Valid";
-          enrollIndicator.className = "text-[10px] font-mono text-emerald-600 font-bold";
-        } else {
-          enrollIndicator.innerText = currentEnroll ? "Min 6 chars" : "Waiting for card";
-          enrollIndicator.className = "text-[10px] font-mono text-slate-400";
-        }
-      }
-
-      if (dobIndicator) {
-        if (isDobValid) {
-          dobIndicator.innerText = "✓ Valid";
-          dobIndicator.className = "text-[10px] font-mono text-emerald-600 font-bold";
-        } else {
-          dobIndicator.innerText = currentDob ? "Invalid date" : "DD-MM-YYYY";
-          dobIndicator.className = "text-[10px] font-mono text-slate-400";
-        }
-      }
-
       if (isEnrollValid && isDobValid) {
         if (badgeCardAuth) {
           badgeCardAuth.className = "text-[10px] uppercase font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300 font-semibold shadow-xs";
           badgeCardAuth.innerText = "Status: Authenticated";
         }
         if (cardStatusCard) {
-          cardStatusCard.className = "p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2 transition shadow-xs";
+          cardStatusCard.className = "p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-3 transition shadow-xs";
         }
         if (authIconBox) {
-          authIconBox.className = "w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200 transition";
+          authIconBox.className = "w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200 transition";
         }
         if (iconLock) iconLock.classList.add('hidden');
         if (iconCheck) iconCheck.classList.remove('hidden');
         if (authTitle) {
-          authTitle.innerText = "ID Card Verified & Authenticated";
+          authTitle.innerText = "ID Card Verified Successfully";
           authTitle.className = "text-xs font-bold text-slate-900";
         }
         if (authSub) {
-          authSub.innerText = "Credentials verified. Ready to fetch academic dossier.";
+          authSub.innerText = "Card authenticated. Ready to compile academic dossier.";
           authSub.className = "text-[11px] text-emerald-700 truncate";
         }
         if (labelScanStatus) {
@@ -1633,45 +1536,45 @@
         }
         if (alertMsg) {
           alertMsg.className = "text-emerald-700 text-[11px] leading-relaxed";
-          alertMsg.innerText = "Student ID credentials verified and ready. Tap below to compile the official academic dossier.";
+          alertMsg.innerText = "Student ID card has been verified. Tap below to compile the official academic dossier.";
         }
 
-        if (!fromManual) playScanSuccessChime();
+        playScanSuccessChime();
         return true;
       } else {
-        const isAttempted = Boolean((inpEnroll && inpEnroll.dataset.attempted) || currentEnroll || currentDob);
+        const isAttempted = Boolean(inpEnroll && inpEnroll.dataset.attempted);
 
         if (badgeCardAuth) {
           badgeCardAuth.className = isAttempted 
             ? "text-[10px] uppercase font-mono text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 font-semibold"
             : "text-[10px] uppercase font-mono text-slate-500 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 font-semibold shadow-xs";
-          badgeCardAuth.innerText = isAttempted ? "Status: Details Required" : "Status: Standby";
+          badgeCardAuth.innerText = isAttempted ? "Status: Scan Incomplete" : "Status: Standby";
         }
         if (cardStatusCard) {
-          cardStatusCard.className = "p-3.5 rounded-xl bg-white border border-slate-200 space-y-2 transition shadow-xs";
+          cardStatusCard.className = "p-4 rounded-xl bg-white border border-slate-200 space-y-3 transition shadow-xs";
         }
         if (authIconBox) {
-          authIconBox.className = "w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 transition";
+          authIconBox.className = "w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 transition";
         }
         if (iconLock) iconLock.classList.remove('hidden');
         if (iconCheck) iconCheck.classList.add('hidden');
         if (authTitle) {
-          authTitle.innerText = isAttempted ? "ID Credentials Needed" : "ID Card Pending";
+          authTitle.innerText = isAttempted ? "ID Card Unreadable" : "ID Card Pending";
           authTitle.className = "text-xs font-bold text-slate-900";
         }
         if (authSub) {
           authSub.innerText = isAttempted
-            ? (!isEnrollValid && !isDobValid ? "Scan ID card or enter enrollment & DOB above" : (!isEnrollValid ? "Please enter valid enrollment number" : "Please enter valid Date of Birth (DD-MM-YYYY)"))
+            ? "Please scan or upload a clear, well-lit card photo"
             : "Scan card with camera or upload card photo";
           authSub.className = "text-[11px] text-slate-500 truncate";
         }
         if (labelScanStatus) {
-          labelScanStatus.innerText = isAttempted ? (isEnrollValid || isDobValid ? "50% Entered" : "Waiting for input") : "Waiting...";
+          labelScanStatus.innerText = isAttempted ? "Scan Incomplete" : "Waiting...";
           labelScanStatus.className = isAttempted ? "font-mono text-amber-600 font-medium" : "font-mono text-slate-400 font-medium";
         }
         if (cardProgress) {
           cardProgress.className = isAttempted ? "bg-amber-500 h-1.5 rounded-full transition-all duration-300" : "bg-slate-200 h-1.5 rounded-full transition-all duration-300";
-          cardProgress.style.width = isAttempted ? (isEnrollValid || isDobValid ? "50%" : "25%") : "10%";
+          cardProgress.style.width = isAttempted ? "30%" : "10%";
         }
 
         if (btnSubmit) {
@@ -1680,11 +1583,7 @@
         }
         if (btnLockIcon) btnLockIcon.classList.remove('hidden');
         if (btnLightningIcon) btnLightningIcon.classList.add('hidden');
-        if (btnText) {
-          btnText.innerText = (!currentEnroll && !currentDob)
-            ? "🔒 Scan ID Card to Unlock Dossier"
-            : "⚠️ Enter Enrollment & DOB to Unlock";
-        }
+        if (btnText) btnText.innerText = "🔒 Scan ID Card to Unlock Dossier";
 
         if (isAttempted && (!isEnrollValid || !isDobValid)) {
           if (alertBox) {
@@ -1694,11 +1593,11 @@
           if (alertIcon) alertIcon.innerText = "ℹ️";
           if (alertTitle) {
             alertTitle.className = "text-amber-800 font-bold";
-            alertTitle.innerText = "Review Credentials Above";
+            alertTitle.innerText = "Card Scan Incomplete";
           }
           if (alertMsg) {
             alertMsg.className = "text-amber-700 text-[11px] leading-relaxed";
-            alertMsg.innerText = "Scan your ID card or verify the Enrollment and Date of Birth fields above. You can edit any field manually.";
+            alertMsg.innerText = "Could not clearly verify student ID details. Please scan or upload a clearer, unblurred photo.";
           }
         } else {
           if (alertBox) alertBox.classList.add('hidden');
@@ -1880,7 +1779,7 @@
       const dob = parsedDob ? parsedDob.rawDigits : rawDob.replace(/[^0-9]/g, '');
 
       if (!enroll || !dob || dob.length < 6) {
-        alert("⚠️ Please provide a valid Student Enrollment Number and Date of Birth.");
+        alert("⚠️ Please scan or upload a valid student ID card.");
         return;
       }
 
