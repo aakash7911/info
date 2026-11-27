@@ -295,10 +295,26 @@
                   <span>Switch Camera</span>
                 </button>
 
-                <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20 hidden">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
-                  <span>Capture & Scan Card</span>
-                </button>
+                <div class="flex items-center gap-2">
+                  <label for="nativeCameraInput" class="w-full sm:w-auto px-4 py-3.5 rounded-xl bg-blue-600 active:bg-blue-700 hover:bg-blue-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-md shadow-blue-600/20 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                    <span>HD Camera</span>
+                  </label>
+                  <input 
+                    type="file" 
+                    id="nativeCameraInput" 
+                    accept="image/*" 
+                    capture="environment" 
+                    class="sr-only" 
+                    onclick="this.value=null;" 
+                    onchange="handleFileSelect(event)" 
+                  />
+
+                  <button id="btnSnap" onclick="captureAndOCR()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 active:bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-sm transition inline-flex items-center justify-center space-x-2 shadow-md shadow-emerald-600/20 hidden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                    <span>Capture & Scan</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -685,26 +701,52 @@
       try {
         let constraints = {
           video: {
-            facingMode: cameraFacingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+            facingMode: { ideal: cameraFacingMode },
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            focusMode: { ideal: 'continuous' }
           }
         };
 
         try {
           currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         } catch (e1) {
-          currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          try {
+            currentStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: cameraFacingMode },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              }
+            });
+          } catch (e2) {
+            currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          }
         }
+
         const video = document.getElementById('videoFeed');
         video.srcObject = currentStream;
+        try {
+          await video.play();
+        } catch (e) {}
+
+        try {
+          const track = currentStream.getVideoTracks()[0];
+          if (track && track.applyConstraints) {
+            await track.applyConstraints({
+              advanced: [{ focusMode: 'continuous' }]
+            }).catch(() => {});
+          }
+        } catch (e) {}
+
         video.classList.remove('hidden');
         document.getElementById('cameraPlaceholder').classList.add('hidden');
         document.getElementById('scannerOverlay').classList.remove('hidden');
         document.getElementById('btnSnap').classList.remove('hidden');
         document.getElementById('btnFlipCamera').classList.remove('hidden');
       } catch (err) {
-        alert("Camera access error: " + err.message + "\nYou can also use the Upload Photo option.");
+        alert("Camera access error: " + err.message + "
+You can also use the HD Camera or Upload option.");
       }
     }
 
@@ -729,16 +771,60 @@
 
     async function captureAndOCR() {
       const video = document.getElementById('videoFeed');
-      const canvas = document.getElementById('captureCanvas');
-      if (!video || !video.videoWidth) return;
+      if (!video) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const btnSnap = document.getElementById('btnSnap');
+      if (btnSnap) {
+        btnSnap.disabled = true;
+        btnSnap.classList.add('opacity-70');
+      }
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      await processImageWithOCR(dataUrl);
+      let dataUrl = null;
+      const track = currentStream ? currentStream.getVideoTracks()[0] : null;
+
+      if (window.ImageCapture && track) {
+        try {
+          const ic = new ImageCapture(track);
+          const photoBlob = await ic.takePhoto().catch(() => null);
+          if (photoBlob) {
+            dataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(photoBlob);
+            });
+          }
+        } catch (photoErr) {}
+      }
+
+      if (!dataUrl) {
+        const vw = video.videoWidth || 1280;
+        const vh = video.videoHeight || 720;
+        const canvas = document.getElementById('captureCanvas') || document.createElement('canvas');
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(video, 0, 0, vw, vh);
+        dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      }
+
+      const overlay = document.getElementById('scannerOverlay');
+      if (overlay) {
+        overlay.classList.add('bg-white/40');
+        setTimeout(() => overlay.classList.remove('bg-white/40'), 150);
+      }
+
+      try {
+        if (dataUrl) {
+          await processImageWithOCR(dataUrl);
+        }
+      } finally {
+        if (btnSnap) {
+          btnSnap.disabled = false;
+          btnSnap.classList.remove('opacity-70');
+        }
+      }
     }
 
     let currentUploadedDataUrl = null;
@@ -1095,6 +1181,31 @@
       });
     }
 
+    async function scanCardZones(targetDataUrl) {
+      let foundEnroll = '';
+      let foundDob = '';
+
+      try {
+        const topCrop = await cropCardZoneCanvas(targetDataUrl, 0.01, 0.12, 0.55, 0.28);
+        const resTop = await Tesseract.recognize(topCrop, 'eng');
+        const parsedTop = extractCredentialsFromText(resTop.data.text || '');
+        if (parsedTop.foundEnrollment) foundEnroll = parsedTop.foundEnrollment;
+        if (parsedTop.foundDob && !foundDob) foundDob = parsedTop.foundDob;
+      } catch(e) {}
+
+      if (!foundEnroll) {
+        try {
+          const botCrop = await cropCardZoneCanvas(targetDataUrl, 0.28, 0.60, 0.72, 0.38);
+          const resBot = await Tesseract.recognize(botCrop, 'eng');
+          const parsedBot = extractCredentialsFromText(resBot.data.text || '');
+          if (parsedBot.foundEnrollment) foundEnroll = parsedBot.foundEnrollment;
+          if (parsedBot.foundDob && !foundDob) foundDob = parsedBot.foundDob;
+        } catch(e) {}
+      }
+
+      return { foundEnrollment: foundEnroll, foundDob: foundDob };
+    }
+
     async function processImageWithOCR(rawImageData) {
       if (isOcrRunning) return;
       isOcrRunning = true;
@@ -1140,9 +1251,9 @@
           logger: m => {
             if (m.status === 'recognizing text') {
               const p = Math.round(m.progress * 25) + 35;
-              progressBar.style.width = `${p}%`;
-              progressPercent.innerText = `${p}%`;
-              statusText.innerText = `Scanning ID Card (${p}%)...`;
+              progressBar.style.width = p + "%";
+              progressPercent.innerText = p + "%";
+              statusText.innerText = "Scanning ID Card (" + p + "%)...";
             }
           }
         });
@@ -1160,39 +1271,20 @@
         if (!combinedDob && parsed1.foundDob) combinedDob = parsed1.foundDob;
 
         if (!combinedEnrollment) {
-          statusText.innerText = 'Scanning top ID area (above photo)...';
-          try {
-            const topCrop = await cropCardZoneCanvas(cleanData, 0.02, 0.16, 0.52, 0.24);
-            const resTop = await Tesseract.recognize(topCrop, 'eng');
-            const parsedTop = extractCredentialsFromText(resTop.data.text || '');
-            if (parsedTop.foundEnrollment) {
-              if (isBlockedEnrollment(parsedTop.foundEnrollment)) {
-                showBlockedOverlay();
-                return;
-              }
-              combinedEnrollment = parsedTop.foundEnrollment;
+          statusText.innerText = 'Scanning ID zones...';
+          const z1 = await scanCardZones(cleanData);
+          if (z1.foundEnrollment) {
+            if (isBlockedEnrollment(z1.foundEnrollment)) {
+              showBlockedOverlay();
+              return;
             }
-          } catch(e) {}
-        }
-
-        if (!combinedEnrollment) {
-          statusText.innerText = 'Scanning bottom ID area (under barcode)...';
-          try {
-            const botCrop = await cropCardZoneCanvas(cleanData, 0.35, 0.65, 0.65, 0.32);
-            const resBot = await Tesseract.recognize(botCrop, 'eng');
-            const parsedBot = extractCredentialsFromText(resBot.data.text || '');
-            if (parsedBot.foundEnrollment) {
-              if (isBlockedEnrollment(parsedBot.foundEnrollment)) {
-                showBlockedOverlay();
-                return;
-              }
-              combinedEnrollment = parsedBot.foundEnrollment;
-            }
-          } catch(e) {}
+            combinedEnrollment = z1.foundEnrollment;
+          }
+          if (!combinedDob && z1.foundDob) combinedDob = z1.foundDob;
         }
 
         if (!combinedEnrollment || !combinedDob) {
-          statusText.innerText = 'Checking sideways orientation (90°)...';
+          statusText.innerText = 'Checking 90° orientation...';
           progressBar.style.width = '65%';
           progressPercent.innerText = '65%';
 
@@ -1213,9 +1305,9 @@
             logger: m => {
               if (m.status === 'recognizing text') {
                 const p = Math.round(m.progress * 20) + 65;
-                progressBar.style.width = `${p}%`;
-                progressPercent.innerText = `${p}%`;
-                statusText.innerText = `Scanning 90° orientation (${p}%)...`;
+                progressBar.style.width = p + "%";
+                progressPercent.innerText = p + "%";
+                statusText.innerText = "Scanning 90° orientation (" + p + "%)...";
               }
             }
           });
@@ -1231,6 +1323,18 @@
             combinedEnrollment = parsedRot90.foundEnrollment;
           }
           if (!combinedDob && parsedRot90.foundDob) combinedDob = parsedRot90.foundDob;
+
+          if (!combinedEnrollment) {
+            const z90 = await scanCardZones(rotated90);
+            if (z90.foundEnrollment) {
+              if (isBlockedEnrollment(z90.foundEnrollment)) {
+                showBlockedOverlay();
+                return;
+              }
+              combinedEnrollment = z90.foundEnrollment;
+            }
+            if (!combinedDob && z90.foundDob) combinedDob = z90.foundDob;
+          }
 
           if (parsedRot90.foundEnrollment || parsedRot90.foundDob) {
             currentUploadedDataUrl = rotated90;
@@ -1269,6 +1373,18 @@
           }
           if (!combinedDob && parsedRot270.foundDob) combinedDob = parsedRot270.foundDob;
 
+          if (!combinedEnrollment) {
+            const z270 = await scanCardZones(rotated270);
+            if (z270.foundEnrollment) {
+              if (isBlockedEnrollment(z270.foundEnrollment)) {
+                showBlockedOverlay();
+                return;
+              }
+              combinedEnrollment = z270.foundEnrollment;
+            }
+            if (!combinedDob && z270.foundDob) combinedDob = z270.foundDob;
+          }
+
           if (parsedRot270.foundEnrollment || parsedRot270.foundDob) {
             currentUploadedDataUrl = rotated270;
             const previewImg = document.getElementById('uploadPreviewImg');
@@ -1294,6 +1410,18 @@
             combinedEnrollment = parsedContrast.foundEnrollment;
           }
           if (!combinedDob && parsedContrast.foundDob) combinedDob = parsedContrast.foundDob;
+
+          if (!combinedEnrollment) {
+            const zC = await scanCardZones(enhancedData);
+            if (zC.foundEnrollment) {
+              if (isBlockedEnrollment(zC.foundEnrollment)) {
+                showBlockedOverlay();
+                return;
+              }
+              combinedEnrollment = zC.foundEnrollment;
+            }
+            if (!combinedDob && zC.foundDob) combinedDob = zC.foundDob;
+          }
         }
 
         document.getElementById('rawOcrText').innerText = combinedText;
@@ -1307,9 +1435,10 @@
           progressBar.className = 'bg-emerald-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = '100%';
+          stopCamera();
           setTimeout(() => progressCard.classList.add('hidden'), 2500);
         } else {
-          statusText.innerText = '⚠️ Scan Incomplete: Tap "Rotate ↻" if sideways or upload clearer card';
+          statusText.innerText = '⚠️ Scan Incomplete: Hold card steady or tap "HD Camera"';
           progressBar.className = 'bg-rose-500 h-1.5 rounded-full transition-all duration-300';
           progressBar.style.width = '100%';
           progressPercent.innerText = 'Incomplete';
